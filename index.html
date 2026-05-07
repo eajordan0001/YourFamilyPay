@@ -1,215 +1,1400 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>優兒行動銀行系統</title>
-
-<script src="https://unpkg.com/html5-qrcode"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>YF 代買記帳系統</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f0e17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="YF記帳">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-body {
-    font-family: sans-serif;
-    text-align: center;
-    margin: 0;
-    padding: 20px;
-    background-color: #f4f4f4;
+/* ══ DESIGN TOKENS ════════════════════════════════════════════ */
+:root {
+  --bg:        #0f0e17;
+  --surface:   #1a1929;
+  --surface2:  #252438;
+  --border:    #2e2d45;
+  --accent:    #ff6b35;
+  --accent2:   #4ecdc4;
+  --gold:      #ffd166;
+  --green:     #06d6a0;
+  --red:       #ef476f;
+  --text:      #fffffe;
+  --muted:     #a7a5c0;
+  --mono:      'JetBrains Mono', monospace;
+  --sans:      'Noto Sans TC', sans-serif;
+  --r:         14px;
+  --r-lg:      20px;
 }
-.container {
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    max-width: 400px;
-    margin: auto;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* ══ HEADER ══════════════════════════════════════════════════ */
+.header{
+  flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;justify-content:space-between;
 }
-#reader {
-    width: 100%;
-    margin-bottom: 20px;
+.header-logo{display:flex;align-items:center;gap:10px;}
+.header-badge{
+  background:var(--accent);color:#fff;
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  padding:4px 9px;border-radius:6px;letter-spacing:1px;
 }
-.info {
-    margin: 15px 0;
+.header-title{font-size:15px;font-weight:900;letter-spacing:2px;}
+.header-role{
+  font-family:var(--mono);font-size:11px;color:var(--gold);
+  background:rgba(255,209,102,0.12);padding:5px 12px;
+  border-radius:20px;border:1px solid rgba(255,209,102,0.3);
 }
-.name {
-    font-size: 24px;
-    font-weight: bold;
-    color: #e6007e;
+
+/* ══ LOGIN SCREEN ════════════════════════════════════════════ */
+#login-screen{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:32px;
+  gap:20px;overflow-y:auto;
 }
-.balance {
-    font-size: 32px;
-    font-weight: bold;
+.login-logo{font-size:56px;margin-bottom:4px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.login-title{font-size:24px;font-weight:900;letter-spacing:3px;text-align:center;}
+.login-sub{font-size:12px;color:var(--muted);text-align:center;letter-spacing:1px;}
+.login-card{
+  width:100%;max-width:340px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:24px;display:flex;flex-direction:column;gap:14px;
 }
-input {
-    width: 80%;
-    padding: 10px;
-    font-size: 28px;
-    text-align: center;
+.login-label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.login-input{
+  width:100%;padding:13px 16px;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:var(--r);
+  font-size:15px;font-family:var(--mono);color:var(--text);
+  outline:none;transition:border-color .2s;letter-spacing:2px;
 }
-button {
-    width: 100%;
-    padding: 15px;
-    font-size: 18px;
-    margin-top: 10px;
+.login-input:focus{border-color:var(--accent2);}
+.login-input::placeholder{color:var(--muted);letter-spacing:1px;}
+.login-btn{
+  padding:15px;background:var(--accent);color:#fff;border:none;
+  border-radius:var(--r);font-size:15px;font-weight:900;
+  font-family:var(--sans);letter-spacing:2px;cursor:pointer;
+  transition:opacity .15s,transform .15s;
 }
+.login-btn:active{opacity:.85;transform:scale(.98);}
+.login-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.qr-scan-btn{
+  padding:13px;background:transparent;color:var(--accent2);
+  border:1.5px solid var(--accent2);border-radius:var(--r);
+  font-size:14px;font-weight:700;font-family:var(--sans);cursor:pointer;
+}
+.qr-scan-btn:active{background:rgba(78,205,196,.1);}
+
+/* ══ APP SHELL ════════════════════════════════════════════════ */
+#app{flex:1;display:none;flex-direction:column;overflow:hidden;}
+#app.show{display:flex;}
+
+/* ══ BOTTOM NAV ══════════════════════════════════════════════ */
+.bottom-nav{
+  flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);
+  display:flex;padding:8px 0 max(8px,env(safe-area-inset-bottom));
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:3px;padding:6px 2px;background:none;border:none;
+  color:var(--muted);font-size:10px;font-weight:700;
+  font-family:var(--sans);cursor:pointer;transition:color .2s;letter-spacing:.5px;
+}
+.nav-btn .nav-icon{font-size:22px;transition:transform .2s;}
+.nav-btn.active{color:var(--accent);}
+.nav-btn.active .nav-icon{transform:scale(1.15);}
+.nav-btn.admin-only{display:none;}
+.role-admin .nav-btn.admin-only{display:flex;}
+
+/* ══ PAGES ════════════════════════════════════════════════════ */
+.pages{flex:1;overflow:hidden;position:relative;}
+.page{position:absolute;inset:0;overflow-y:auto;padding:16px;display:none;}
+.page.active{display:block;}
+.page-inner{max-width:480px;margin:0 auto;}
+
+/* ══ SECTION LABEL ═══════════════════════════════════════════ */
+.sec{
+  font-size:10px;font-weight:700;letter-spacing:2.5px;color:var(--muted);
+  text-transform:uppercase;margin:20px 0 10px;
+  display:flex;align-items:center;gap:8px;
+}
+.sec::after{content:'';flex:1;height:1px;background:var(--border);}
+.sec:first-child{margin-top:4px;}
+
+/* ══ MEMBER GRID（5 欄，15人剛好 3 排）════════════════════════ */
+.member-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:7px;
+}
+.member-btn{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:10px;padding:8px 3px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  cursor:pointer;transition:all .15s;position:relative;
+}
+.member-btn .m-emoji{font-size:20px;}
+.member-btn .m-id{font-family:var(--mono);font-size:8px;color:var(--muted);}
+.member-btn .m-name{font-size:10px;font-weight:700;color:var(--text);text-align:center;line-height:1.2;}
+.member-btn .m-bal{font-family:var(--mono);font-size:9px;color:var(--accent2);}
+.member-btn.low .m-bal{color:var(--red);}
+.member-btn .low-badge{position:absolute;top:3px;right:3px;font-size:9px;line-height:1;}
+.member-btn:active{transform:scale(.95);}
+.member-btn.selected{background:rgba(255,107,53,.12);border-color:var(--accent);}
+.member-btn.selected .m-id{color:var(--accent);}
+
+/* ══ ITEM CHIPS ══════════════════════════════════════════════ */
+.item-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.item-chip{
+  padding:8px 16px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:20px;font-size:13px;font-weight:700;color:var(--text);
+  cursor:pointer;transition:all .15s;
+}
+.item-chip:active{transform:scale(.95);}
+.item-chip.selected{background:rgba(78,205,196,.15);border-color:var(--accent2);color:var(--accent2);}
+.item-chip.custom{background:rgba(6,214,160,.08);border-color:var(--green);color:var(--green);}
+.item-chip.custom.selected{background:rgba(6,214,160,.2);}
+
+.custom-row{display:flex;gap:8px;margin-top:10px;}
+.custom-row input{
+  flex:1;padding:10px 14px;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:var(--r);
+  font-size:14px;font-family:var(--sans);color:var(--text);outline:none;
+}
+.custom-row input:focus{border-color:var(--green);}
+.custom-row input::placeholder{color:var(--muted);}
+.btn-add-chip{
+  padding:10px 14px;background:var(--green);color:#0f0e17;border:none;
+  border-radius:var(--r);font-size:13px;font-weight:900;font-family:var(--sans);
+  cursor:pointer;white-space:nowrap;
+}
+
+/* ══ AMOUNT ══════════════════════════════════════════════════ */
+.amount-box{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-lg);padding:16px;
+}
+.amount-input{
+  width:100%;background:none;border:none;outline:none;
+  font-family:var(--mono);font-size:36px;font-weight:700;
+  color:var(--text);text-align:center;padding:8px;
+}
+.amount-input::placeholder{color:var(--border);}
+.quick-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.q-btn{
+  padding:7px 12px;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;
+  color:var(--accent2);cursor:pointer;transition:all .15s;
+}
+.q-btn:active{background:rgba(78,205,196,.15);border-color:var(--accent2);}
+
+/* ══ NOTE ════════════════════════════════════════════════════ */
+.note-input{
+  width:100%;padding:12px 14px;background:var(--surface);
+  border:1.5px solid var(--border);border-radius:var(--r);
+  font-size:14px;font-family:var(--sans);color:var(--text);outline:none;resize:none;
+}
+.note-input:focus{border-color:var(--muted);}
+.note-input::placeholder{color:var(--muted);}
+
+/* ══ DATE PICKER ══════════════════════════════════════════════ */
+.date-row{display:flex;gap:8px;align-items:center;}
+.date-toggle{
+  flex-shrink:0;padding:10px 14px;background:var(--surface);
+  border:1.5px solid var(--border);border-radius:var(--r);
+  font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s;
+}
+.date-toggle.on{border-color:var(--gold);color:var(--gold);background:rgba(255,209,102,.08);}
+.date-input{
+  flex:1;padding:10px 14px;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:var(--r);
+  font-size:13px;font-family:var(--mono);color:var(--text);outline:none;display:none;
+}
+.date-input.show{display:block;}
+.date-input:focus{border-color:var(--gold);}
+
+/* ══ ADD-TO-CART BTN ═════════════════════════════════════════ */
+.add-cart-btn{
+  display:block;width:100%;margin-top:20px;padding:16px;
+  background:var(--accent2);color:#0f0e17;border:none;border-radius:var(--r);
+  font-size:15px;font-weight:900;font-family:var(--sans);letter-spacing:1px;
+  cursor:pointer;transition:opacity .15s,transform .15s;
+}
+.add-cart-btn:active{opacity:.85;transform:scale(.98);}
+
+/* ══ CART ════════════════════════════════════════════════════ */
+.cart-wrap{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-lg);overflow:hidden;
+}
+.cart-empty{padding:28px;text-align:center;color:var(--muted);font-size:13px;}
+.cart-row{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;border-bottom:1px solid var(--border);
+}
+.cart-row:last-child{border-bottom:none;}
+.cart-info{flex:1;min-width:0;}
+.cart-item-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cart-item-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.cart-amt{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--accent);flex-shrink:0;}
+.cart-del{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;}
+.cart-footer{
+  background:var(--surface2);padding:14px 16px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.cart-total-label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;}
+.cart-total-amt{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--gold);}
+
+.submit-btn{
+  display:block;width:100%;margin-top:10px;padding:17px;
+  background:var(--accent);color:#fff;border:none;border-radius:var(--r);
+  font-size:16px;font-weight:900;font-family:var(--sans);letter-spacing:2px;
+  cursor:pointer;box-shadow:0 4px 0 rgba(255,107,53,.4);
+  transition:opacity .15s,transform .15s;
+}
+.submit-btn:active{transform:translateY(2px);box-shadow:none;}
+.submit-btn:disabled{background:var(--border);box-shadow:none;cursor:not-allowed;}
+.clear-btn{
+  display:block;width:100%;margin-top:6px;padding:12px;
+  background:transparent;color:var(--muted);border:1.5px solid var(--border);
+  border-radius:var(--r);font-size:13px;font-weight:700;font-family:var(--sans);cursor:pointer;
+}
+
+/* ══ OVERVIEW PAGE ═══════════════════════════════════════════ */
+.overview-member-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-lg);overflow:hidden;margin-bottom:12px;
+}
+.omc-header{
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+}
+.omc-emoji{font-size:28px;}
+.omc-info{flex:1;}
+.omc-id{font-family:var(--mono);font-size:10px;color:var(--muted);}
+.omc-name{font-size:15px;font-weight:900;}
+.omc-bal{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent2);}
+.omc-bal.low{color:var(--red);}
+.omc-bal.ok{color:var(--green);}
+.omc-topup-btn{
+  padding:8px 14px;background:rgba(6,214,160,.1);border:1.5px solid var(--green);
+  border-radius:10px;font-size:12px;font-weight:700;color:var(--green);
+  font-family:var(--sans);cursor:pointer;flex-shrink:0;
+}
+.low-warn{
+  background:rgba(239,71,111,.1);border-top:1px solid rgba(239,71,111,.3);
+  padding:8px 16px;font-size:11px;font-weight:700;color:var(--red);
+  display:flex;align-items:center;gap:6px;
+}
+
+/* ══ RECORDS PAGE ════════════════════════════════════════════ */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.filter-select{
+  flex:1;min-width:0;padding:10px 12px;background:var(--surface);
+  border:1.5px solid var(--border);border-radius:var(--r);
+  font-size:12px;font-weight:700;font-family:var(--sans);color:var(--text);
+  outline:none;-webkit-appearance:none;appearance:none;
+}
+.filter-select:focus{border-color:var(--accent2);}
+.filter-date-btn{
+  padding:10px 14px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r);font-size:12px;font-weight:700;color:var(--gold);cursor:pointer;flex-shrink:0;
+}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r);padding:12px 8px;text-align:center;
+}
+.stat-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
+.stat-val{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);}
+.stat-val.red{color:var(--red);}
+.stat-val.green{color:var(--green);}
+
+.timeline{padding-left:20px;position:relative;}
+.timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--border);}
+.tl-day{margin-bottom:20px;}
+.tl-day-label{
+  font-size:10px;font-weight:700;letter-spacing:2px;color:var(--muted);
+  margin-bottom:8px;background:var(--bg);display:inline-block;padding-right:10px;
+}
+.tl-entry{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r);padding:12px 14px;margin-bottom:8px;position:relative;
+}
+.tl-entry::before{
+  content:'';position:absolute;left:-17px;top:14px;
+  width:10px;height:10px;border-radius:50%;
+  background:var(--accent);border:2px solid var(--bg);
+}
+.tl-entry.topup::before{background:var(--green);}
+.tl-entry-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.tl-who{font-size:12px;font-weight:900;}
+.tl-badge{
+  display:inline-block;font-size:9px;font-weight:700;
+  padding:2px 7px;border-radius:10px;margin-left:6px;
+  background:rgba(255,107,53,.15);color:var(--accent);
+}
+.tl-badge.topup{background:rgba(6,214,160,.15);color:var(--green);}
+.tl-amt{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--red);}
+.tl-amt.topup{color:var(--green);}
+.tl-entry-bot{display:flex;justify-content:space-between;margin-top:5px;}
+.tl-item{font-size:12px;color:var(--muted);}
+.tl-time{font-family:var(--mono);font-size:10px;color:var(--muted);}
+
+/* ══ MY PAGE ═════════════════════════════════════════════════ */
+.my-hero{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-lg);padding:24px;text-align:center;margin-bottom:16px;
+}
+.my-emoji{font-size:48px;margin-bottom:8px;}
+.my-id{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:2px;}
+.my-name{font-size:20px;font-weight:900;margin:4px 0;}
+.my-bal-label{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;}
+.my-bal{font-family:var(--mono);font-size:52px;font-weight:700;color:var(--accent2);line-height:1;}
+.my-bal.low{color:var(--red);}
+.my-low-warn{
+  margin-top:10px;padding:8px 14px;background:rgba(239,71,111,.1);
+  border-radius:10px;font-size:12px;font-weight:700;color:var(--red);display:none;
+}
+.my-low-warn.show{display:block;}
+.my-history-wrap{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-lg);overflow:hidden;
+}
+.my-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-bottom:1px solid var(--border);
+}
+.my-row:last-child{border-bottom:none;}
+.my-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.my-dot.topup{background:var(--green);}
+.my-row-info{flex:1;min-width:0;}
+.my-row-item{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.my-row-time{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;}
+.my-row-amt{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--red);flex-shrink:0;}
+.my-row-amt.topup{color:var(--green);}
+
+/* ══ CALENDAR PICKER ══════════════════════════════════════════ */
+.cal-modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(15,14,23,.9);
+  z-index:8000;align-items:center;justify-content:center;padding:20px;
+}
+.cal-modal-overlay.show{display:flex;}
+.cal-box{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-lg);padding:20px;width:100%;max-width:340px;
+}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cal-nav{background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px 10px;}
+.cal-month-label{font-size:15px;font-weight:900;font-family:var(--mono);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
+.cal-dow{font-size:10px;font-weight:700;color:var(--muted);padding:4px 0;}
+.cal-day{padding:8px 4px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;}
+.cal-day:hover{background:var(--surface2);}
+.cal-day.selected{background:var(--accent);color:#fff;}
+.cal-day.today{outline:1.5px solid var(--accent2);}
+.cal-day.disabled{color:var(--border);cursor:default;}
+.cal-day.disabled:hover{background:none;}
+.cal-ok-btn{
+  display:block;width:100%;margin-top:16px;padding:13px;
+  background:var(--accent);color:#fff;border:none;border-radius:var(--r);
+  font-size:14px;font-weight:900;font-family:var(--sans);cursor:pointer;
+}
+.cal-clear-btn{
+  display:block;width:100%;margin-top:8px;padding:11px;
+  background:transparent;color:var(--muted);border:1.5px solid var(--border);
+  border-radius:var(--r);font-size:13px;font-weight:700;font-family:var(--sans);cursor:pointer;
+}
+
+/* ══ MODALS ══════════════════════════════════════════════════ */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(15,14,23,.92);
+  z-index:9000;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.show{display:flex;}
+.modal-box{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-lg);padding:24px;width:100%;max-width:360px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.modal-title{font-size:18px;font-weight:900;text-align:center;}
+.modal-sub{font-size:12px;color:var(--muted);text-align:center;}
+.modal-input{
+  width:100%;padding:14px;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:var(--r);font-size:28px;font-family:var(--mono);
+  font-weight:700;color:var(--text);text-align:center;outline:none;
+}
+.modal-input:focus{border-color:var(--gold);}
+.modal-confirm-btn{
+  padding:15px;background:var(--green);color:#0f0e17;border:none;
+  border-radius:var(--r);font-size:15px;font-weight:900;font-family:var(--sans);cursor:pointer;
+}
+.modal-cancel-btn{
+  padding:13px;background:transparent;color:var(--muted);
+  border:1.5px solid var(--border);border-radius:var(--r);
+  font-size:13px;font-weight:700;font-family:var(--sans);cursor:pointer;
+}
+
+/* ══ SUCCESS RECEIPT ══════════════════════════════════════════ */
+.receipt{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;font-family:var(--mono);font-size:13px;
+  max-height:55vh;overflow-y:auto;
+}
+.receipt-row{display:flex;margin-bottom:8px;align-items:flex-start;}
+.receipt-row:last-child{margin-bottom:0;}
+.receipt-label{color:var(--muted);white-space:nowrap;min-width:80px;}
+.receipt-colon{color:var(--muted);margin:0 4px;}
+.receipt-val{color:var(--text);word-break:break-all;}
+.receipt-val.accent{color:var(--accent);}
+.receipt-val.green{color:var(--green);}
+.receipt-val.red{color:var(--red);}
+.receipt-divider{border:none;border-top:1px dashed var(--border);margin:10px 0;}
+.receipt-items-title{color:var(--muted);font-size:11px;margin-bottom:6px;}
+.receipt-item-row{
+  display:flex;justify-content:space-between;
+  padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;
+}
+.receipt-item-row:last-child{border-bottom:none;}
+.receipt-total-row{
+  display:flex;justify-content:space-between;
+  margin-top:8px;font-size:14px;font-weight:700;
+}
+.receipt-total-row span:last-child{color:var(--accent);}
+.warn-strip{
+  background:rgba(239,71,111,.1);border:1px solid rgba(239,71,111,.3);
+  border-radius:var(--r);padding:10px 14px;font-size:12px;font-weight:700;
+  color:var(--red);text-align:center;display:none;
+}
+.warn-strip.show{display:block;}
+
+/* ══ QR SCAN OVERLAY ══════════════════════════════════════════ */
+#qr-overlay{
+  display:none;position:fixed;inset:0;z-index:9500;
+  background:#000;flex-direction:column;align-items:center;justify-content:center;
+}
+#qr-overlay.show{display:flex;}
+#qr-video{width:100%;max-width:360px;border-radius:var(--r-lg);}
+.qr-frame{
+  position:absolute;width:200px;height:200px;
+  border:3px solid var(--accent2);border-radius:12px;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.6);
+}
+.qr-label{margin-top:20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:1px;}
+.qr-cancel{
+  margin-top:16px;padding:12px 32px;background:rgba(255,255,255,.1);
+  border:1.5px solid rgba(255,255,255,.3);border-radius:var(--r);
+  color:#fff;font-size:14px;font-weight:700;font-family:var(--sans);cursor:pointer;
+}
+
+/* ══ TOAST ════════════════════════════════════════════════════ */
+.toast{
+  position:fixed;bottom:calc(70px + env(safe-area-inset-bottom));left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--surface2);color:var(--text);border:1px solid var(--border);
+  padding:12px 20px;border-radius:24px;font-size:13px;font-weight:700;letter-spacing:.5px;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:9999;
+  opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  white-space:nowrap;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ══ LOADING ══════════════════════════════════════════════════ */
+.loading-box{padding:48px;text-align:center;color:var(--muted);}
+.spinner{
+  display:inline-block;width:28px;height:28px;border:2.5px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .8s linear infinite;margin-bottom:10px;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty-box{padding:48px;text-align:center;color:var(--muted);font-size:13px;}
 </style>
 </head>
-
 <body>
-<div class="container">
-<h2>💰 優兒行動銀行</h2>
 
-<div id="reader"></div>
+<!-- ══ LOGIN ═════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-logo">🧾</div>
+  <div class="login-title">YF 代買記帳</div>
+  <div class="login-sub">OFFICE EXPENSE TRACKER</div>
+  <div class="login-card">
+    <div class="login-label">輸入通行碼</div>
+    <input class="login-input" id="login-token" type="password" placeholder="請輸入 token…" autocomplete="off">
+    <button class="login-btn" onclick="doLogin()">進入系統</button>
+    <div class="login-divider">或</div>
+    <button class="qr-scan-btn" onclick="openQRScan()">📷 掃描個人 QR Code 查詢帳務</button>
+  </div>
+</div>
 
-<div id="result" style="display:none;">
-    <div class="info">
-        <div class="name" id="name">---</div>
-        <div class="balance" id="balance">---</div>
+<!-- ══ APP ════════════════════════════════════════════════════ -->
+<div id="app">
+  <div class="header">
+    <div class="header-logo">
+      <span class="header-badge">YF</span>
+      <span class="header-title">代買記帳系統</span>
+    </div>
+    <span class="header-role" id="header-role">—</span>
+  </div>
+
+  <div class="pages">
+
+    <!-- ── 記帳頁 ── -->
+    <div class="page active" id="page-add">
+      <div class="page-inner">
+        <div class="sec">選擇成員</div>
+        <div class="member-grid" id="member-grid"></div>
+
+        <div class="sec">選擇品項</div>
+        <div class="item-chips" id="item-chips"></div>
+        <div class="custom-row">
+          <input type="text" id="custom-item-input" placeholder="自訂品項…" maxlength="20">
+          <button class="btn-add-chip" onclick="addCustomItem()">＋</button>
+        </div>
+
+        <div class="sec">金額</div>
+        <div class="amount-box">
+          <input type="number" id="amount-input" class="amount-input" placeholder="0" min="1">
+          <div class="quick-row">
+            <button class="q-btn" onclick="setAmt(30)">30</button>
+            <button class="q-btn" onclick="setAmt(50)">50</button>
+            <button class="q-btn" onclick="setAmt(80)">80</button>
+            <button class="q-btn" onclick="setAmt(100)">100</button>
+            <button class="q-btn" onclick="setAmt(120)">120</button>
+            <button class="q-btn" onclick="setAmt(150)">150</button>
+            <button class="q-btn" onclick="setAmt(180)">180</button>
+            <button class="q-btn" onclick="setAmt(200)">200</button>
+          </div>
+        </div>
+
+        <div class="sec">備註（選填）</div>
+        <textarea class="note-input" id="note-input" rows="2" placeholder="如：大杯去冰、加拿鐵…"></textarea>
+
+        <div class="sec">交易日期（選填，不填 = 今天）</div>
+        <div class="date-row">
+          <button class="date-toggle" id="date-toggle" onclick="toggleDateInput()">📅 回溯日期</button>
+          <input type="date" class="date-input" id="date-input">
+        </div>
+
+        <button class="add-cart-btn" onclick="addToCart()">＋ 加入購物車</button>
+
+        <div class="sec">本次購物車</div>
+        <div class="cart-wrap">
+          <div id="cart-list"></div>
+          <div class="cart-footer">
+            <span class="cart-total-label">本次合計</span>
+            <span class="cart-total-amt" id="cart-total">$0</span>
+          </div>
+        </div>
+        <button class="submit-btn" id="submit-btn" onclick="submitAll()">✅ 全部送出記帳</button>
+        <button class="clear-btn" onclick="clearCart()">🗑 清空購物車</button>
+        <div style="height:20px;"></div>
+      </div>
     </div>
 
-    <input type="number" id="amount" value="0">
+    <!-- ── 結算頁（管理員）── -->
+    <div class="page" id="page-overview">
+      <div class="page-inner">
+        <div id="overview-content"><div class="loading-box"><div class="spinner"></div><br>載入中…</div></div>
+        <div style="height:20px;"></div>
+      </div>
+    </div>
 
-    <button id="ok-btn" onclick="doTrade()">確認加值/扣款</button>
-    <button onclick="resetUI()">重新掃描</button>
-</div>
+    <!-- ── 紀錄頁（管理員）── -->
+    <div class="page" id="page-records">
+      <div class="page-inner">
+        <div class="filter-bar">
+          <select class="filter-select" id="rec-filter-member" onchange="applyFilter()">
+            <option value="">所有成員</option>
+          </select>
+          <select class="filter-select" id="rec-filter-type" onchange="applyFilter()">
+            <option value="">所有類型</option>
+            <option value="扣款">扣款</option>
+            <option value="儲值">儲值</option>
+          </select>
+          <button class="filter-date-btn" onclick="openCalendar()">📅</button>
+          <button class="filter-date-btn" onclick="loadRecords()">↻</button>
+        </div>
+        <div id="rec-date-tag" style="display:none;margin-bottom:10px;">
+          <span style="background:rgba(255,209,102,.1);border:1px solid var(--gold);color:var(--gold);
+            border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;"
+            onclick="clearDateFilter()">
+            📅 <span id="rec-date-range"></span> ✕
+          </span>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">總筆數</div><div class="stat-val" id="stat-count">—</div></div>
+          <div class="stat-card"><div class="stat-label">總扣款</div><div class="stat-val red" id="stat-expense">—</div></div>
+          <div class="stat-card"><div class="stat-label">總儲值</div><div class="stat-val green" id="stat-topup">—</div></div>
+        </div>
+        <div id="rec-content"><div class="loading-box"><div class="spinner"></div><br>載入中…</div></div>
+        <div style="height:20px;"></div>
+      </div>
+    </div>
+
+    <!-- ── 我的帳務頁 ── -->
+    <div class="page" id="page-my">
+      <div class="page-inner">
+        <div id="my-content"><div class="empty-box">👆 請先登入或掃描 QR Code</div></div>
+        <div style="height:20px;"></div>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <div class="bottom-nav" id="bottom-nav">
+    <button class="nav-btn admin-only" onclick="switchTab('add')" data-tab="add">
+      <span class="nav-icon">＋</span>記帳
+    </button>
+    <button class="nav-btn admin-only" onclick="switchTab('overview')" data-tab="overview">
+      <span class="nav-icon">💰</span>結算
+    </button>
+    <button class="nav-btn admin-only" onclick="switchTab('records')" data-tab="records">
+      <span class="nav-icon">📋</span>紀錄
+    </button>
+    <button class="nav-btn" onclick="switchTab('my')" data-tab="my">
+      <span class="nav-icon">👤</span>我的
+    </button>
+  </div>
+</div><!-- /app -->
+
+<!-- ══ MODALS ══════════════════════════════════════════════════ -->
+
+<!-- 儲值 -->
+<div class="modal-overlay" id="topup-modal">
+  <div class="modal-box">
+    <div class="modal-title">💳 儲值</div>
+    <div class="modal-sub" id="topup-modal-sub"></div>
+    <input type="number" class="modal-input" id="topup-amount" placeholder="500" min="1">
+    <input type="text" class="note-input" id="topup-note" placeholder="備註（選填）" style="font-size:14px;">
+    <button class="modal-confirm-btn" onclick="confirmTopup()">確認儲值</button>
+    <button class="modal-cancel-btn" onclick="closeTopupModal()">取消</button>
+  </div>
 </div>
 
+<!-- 成功收據 -->
+<div class="modal-overlay" id="success-modal">
+  <div class="modal-box">
+    <div class="modal-title">✅ 記帳成功</div>
+    <div class="receipt" id="receipt-content"></div>
+    <div class="warn-strip" id="success-warn"></div>
+    <button class="modal-confirm-btn" onclick="closeSuccessModal()" style="margin-top:4px;">確定</button>
+  </div>
+</div>
+
+<!-- 日曆 -->
+<div class="cal-modal-overlay" id="cal-modal">
+  <div class="cal-box">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calNavMonth(-1)">‹</button>
+      <span class="cal-month-label" id="cal-month-label"></span>
+      <button class="cal-nav" onclick="calNavMonth(1)">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <button class="cal-ok-btn" onclick="confirmCalendar()">套用日期範圍</button>
+    <button class="cal-clear-btn" onclick="clearCalendarSelection()">清除選取</button>
+  </div>
+</div>
+
+<!-- QR 掃描 -->
+<div id="qr-overlay">
+  <video id="qr-video" autoplay playsinline muted></video>
+  <div class="qr-frame"></div>
+  <div class="qr-label">請對準個人 QR Code</div>
+  <button class="qr-cancel" onclick="closeQRScan()">取消</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <script>
-// 🔗 你的後端
-const scriptURL = "https://script.google.com/macros/s/AKfycbzI8YIKfK2h5MVeUOWE1oJq4mHu4KguUOVS_gt0wZdHvSz1AaDaOaE8jCD0rmz9q9SV/exec";
+// ════════════════════════════════════════════════════════════
+//  ⚙️ 設定（部署後修改這三行）
+// ════════════════════════════════════════════════════════════
+const SCRIPT_URL  = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+const TOKEN_ADMIN = "admin2024";
+const TOKEN_VIEW  = "view2024";
 
-// 🔐 token（要跟後端一致）
-const TOKEN = "abc123";
+// ── 成員設定（共 15 人，與 Code.gs 保持一致）──────────────
+const MEMBERS = [
+  { id:"YF001", name:"成員01", emoji:"👦" },
+  { id:"YF002", name:"成員02", emoji:"👧" },
+  { id:"YF003", name:"成員03", emoji:"🧑" },
+  { id:"YF004", name:"成員04", emoji:"👨" },
+  { id:"YF005", name:"成員05", emoji:"👩" },
+  { id:"YF006", name:"成員06", emoji:"🧔" },
+  { id:"YF007", name:"成員07", emoji:"👱‍♀️" },
+  { id:"YF008", name:"成員08", emoji:"💪" },
+  { id:"YF009", name:"成員09", emoji:"🤓" },
+  { id:"YF010", name:"成員10", emoji:"🤖" },
+  { id:"YF011", name:"成員11", emoji:"🧑‍💼" },
+  { id:"YF012", name:"成員12", emoji:"👩‍💼" },
+  { id:"YF013", name:"成員13", emoji:"🧑‍🎓" },
+  { id:"YF014", name:"成員14", emoji:"👨‍🎓" },
+  { id:"YF015", name:"成員15", emoji:"👩‍🎓" },
+];
 
-let scanner;
-let globalId = "";
-let tid = "";
+const FIXED_ITEMS = ["便當","飲料","咖啡","早餐","零食","麵食","甜點","便利商店"];
 
-// 🔊 音效（只建立一次）
-const successSound = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+// ── 狀態 ────────────────────────────────────────────────────
+let currentRole    = null;
+let currentToken   = null;
+let selectedMember = null;
+let selectedItem   = null;
+let customItems    = [];
+let cart           = [];
+let memberBalances = {};
+let topupTargetId  = null;
+let allRecords     = [];
+let recFilterStartDate = null;
+let recFilterEndDate   = null;
+let calState = { year:0, month:0, sel1:null, sel2:null };
 
-// 🎉 成功回饋
-function playSuccessFeedback() {
-    if (navigator.vibrate) navigator.vibrate(100);
-
-    successSound.pause();
-    successSound.currentTime = 0;
-    successSound.play();
+// ════════════════════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════════════════════
+function doLogin() {
+  const token = document.getElementById("login-token").value.trim();
+  if (!token) return showToast("請輸入通行碼");
+  if (token === TOKEN_ADMIN)     enterApp('admin',  token);
+  else if (token === TOKEN_VIEW) enterApp('viewer', token);
+  else showToast("❌ 通行碼錯誤");
 }
 
-// ⏱ timeout 防卡死
-function fetchWithTimeout(url, timeout = 5000) {
-    return Promise.race([
-        fetch(url),
-        new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("timeout")), timeout)
-        )
-    ]);
+function enterApp(role, token, viewMemberId) {
+  currentRole  = role;
+  currentToken = token;
+  document.getElementById("login-screen").style.display = "none";
+  const app = document.getElementById("app");
+  app.classList.add("show");
+  if (role === 'admin') {
+    app.classList.add("role-admin");
+    document.getElementById("header-role").textContent = "👑 管理員";
+    switchTab('add');
+    loadMemberBalances();
+  } else {
+    document.getElementById("header-role").textContent = "👤 查詢模式";
+    switchTab('my');
+    if (viewMemberId) loadMyData(viewMemberId);
+  }
 }
 
-// 🚀 啟動掃描
-function startScan() {
-    document.getElementById("result").style.display = "none";
-
-    if (!scanner) scanner = new Html5Qrcode("reader");
-
-    scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (text) => {
-            globalId = text.trim();
-            tid = "T" + Date.now();
-
-            scanner.stop();
-            fetchData();
-        }
-    );
-}
-
-// 📥 讀取資料
-async function fetchData() {
-    try {
-        const url = `${scriptURL}?id=${globalId}&amount=0&token=${TOKEN}`;
-        const res = await fetchWithTimeout(url);
-        const data = await res.json();
-
-        if (data.status === "success") {
-            document.getElementById("name").innerText = data.name;
-            document.getElementById("balance").innerText = data.balance || data.newBalance;
-
-            document.getElementById("result").style.display = "block";
-        } else {
-            alert(data.message);
-        }
-
-    } catch (e) {
-        alert("讀取失敗（可能網路不穩）");
-    }
-}
-
-// 💰 交易
-async function doTrade() {
-    const btn = document.getElementById("ok-btn");
-    if (btn.disabled) return;
-
-    let amt = parseInt(document.getElementById("amount").value) || 0;
-    if (amt === 0) return alert("請輸入金額");
-
-    let bal = parseInt(document.getElementById("balance").innerText) || 0;
-
-    // 防扣到負數
-    if (amt < 0 && Math.abs(amt) > bal) {
-        return alert("餘額不足");
-    }
-
-    btn.disabled = true;
-    btn.innerText = "處理中...";
-
-    try {
-        const url = `${scriptURL}?id=${globalId}&amount=${amt}&tid=${tid}&token=${TOKEN}`;
-        const res = await fetchWithTimeout(url);
-        const data = await res.json();
-
-        if (data.status === "success") {
-
-            // 🎉 成功效果
-            playSuccessFeedback();
-
-            alert(`✅ 完成\n${data.name}\n餘額：${data.newBalance}`);
-
-            resetUI();
-
-        } else {
-            alert(data.message);
-            resetBtn();
-        }
-
-    } catch (e) {
-        alert("網路錯誤");
-        resetBtn();
-    }
-}
-
-// 🔄 重置按鈕
-function resetBtn() {
-    const btn = document.getElementById("ok-btn");
-    btn.disabled = false;
-    btn.innerText = "確認加值/扣款";
-}
-
-// 🔁 重置畫面
-function resetUI() {
-    resetBtn();
-    startScan();
-}
-
-// ✨ UX：點擊清空 0
-document.getElementById("amount").addEventListener("focus", function() {
-    if (this.value == "0") this.value = "";
+document.getElementById("login-token").addEventListener("keydown", e => {
+  if (e.key === "Enter") doLogin();
 });
 
-// 🚀 啟動
-window.onload = startScan;
+// ════════════════════════════════════════════════════════════
+//  TAB NAV
+// ════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`page-${tab}`).classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+  if (tab === 'overview') loadOverview();
+  if (tab === 'records')  loadRecords();
+}
 
+// ════════════════════════════════════════════════════════════
+//  MEMBER BALANCES
+// ════════════════════════════════════════════════════════════
+async function loadMemberBalances() {
+  try {
+    const data = await api({ action:"members" });
+    if (data.status === "success") {
+      data.members.forEach(m => { memberBalances[m.id] = m; });
+      renderMemberGrid();
+    }
+  } catch(e) { renderMemberGrid(); }
+}
+
+function renderMemberGrid() {
+  const grid = document.getElementById("member-grid");
+  grid.innerHTML = "";
+  MEMBERS.forEach(m => {
+    const info  = memberBalances[m.id];
+    const bal   = info ? info.balance : null;
+    const isLow = info ? info.isLow  : false;
+    const btn   = document.createElement("button");
+    btn.className = "member-btn"
+      + (selectedMember === m.id ? " selected" : "")
+      + (isLow ? " low" : "");
+    btn.innerHTML = `
+      ${isLow ? '<span class="low-badge">⚠️</span>' : ''}
+      <span class="m-emoji">${m.emoji}</span>
+      <span class="m-id">${m.id}</span>
+      <span class="m-name">${m.name}</span>
+      <span class="m-bal">${bal !== null ? "$"+bal : "—"}</span>`;
+    btn.onclick = () => { selectedMember = m.id; renderMemberGrid(); };
+    grid.appendChild(btn);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  ITEMS
+// ════════════════════════════════════════════════════════════
+function renderItemChips() {
+  const wrap = document.getElementById("item-chips");
+  wrap.innerHTML = "";
+  [...FIXED_ITEMS, ...customItems].forEach((item, i) => {
+    const isCustom = i >= FIXED_ITEMS.length;
+    const btn      = document.createElement("button");
+    btn.className  = "item-chip"
+      + (isCustom ? " custom" : "")
+      + (selectedItem === item ? " selected" : "");
+    btn.textContent = item;
+    btn.onclick = () => { selectedItem = item; renderItemChips(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function addCustomItem() {
+  const v = document.getElementById("custom-item-input").value.trim();
+  if (!v) return showToast("請輸入品項名稱");
+  if ([...FIXED_ITEMS,...customItems].includes(v)) return showToast("品項已存在");
+  customItems.push(v);
+  selectedItem = v;
+  document.getElementById("custom-item-input").value = "";
+  renderItemChips();
+}
+
+function setAmt(v) { document.getElementById("amount-input").value = v; }
+
+// ════════════════════════════════════════════════════════════
+//  DATE TOGGLE
+// ════════════════════════════════════════════════════════════
+function toggleDateInput() {
+  const toggle = document.getElementById("date-toggle");
+  const input  = document.getElementById("date-input");
+  const isOn   = input.classList.toggle("show");
+  toggle.classList.toggle("on", isOn);
+  if (isOn && !input.value) {
+    const today   = new Date();
+    const minDate = new Date();
+    minDate.setMonth(minDate.getMonth() - 6);
+    input.value = today.toISOString().split("T")[0];
+    input.min   = minDate.toISOString().split("T")[0];
+    input.max   = today.toISOString().split("T")[0];
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  CART
+// ════════════════════════════════════════════════════════════
+function addToCart() {
+  if (!selectedMember) return showToast("⚠ 請先選擇成員");
+  if (!selectedItem)   return showToast("⚠ 請先選擇品項");
+  const amt = parseInt(document.getElementById("amount-input").value) || 0;
+  if (amt <= 0) return showToast("⚠ 請輸入有效金額");
+  const note   = document.getElementById("note-input").value.trim();
+  const txDate = document.getElementById("date-input").classList.contains("show")
+    ? document.getElementById("date-input").value.replace(/-/g, "/")
+    : "";
+  cart.push({ memberId:selectedMember, item:selectedItem, amount:amt, note, txDate });
+  renderCart();
+  document.getElementById("amount-input").value = "";
+  document.getElementById("note-input").value = "";
+  const m = MEMBERS.find(mm => mm.id === selectedMember);
+  showToast(`✓ ${m.emoji} ${selectedItem} $${amt}`);
+}
+
+function renderCart() {
+  const list  = document.getElementById("cart-list");
+  const total = cart.reduce((s,c) => s+c.amount, 0);
+  document.getElementById("cart-total").textContent = "$" + total;
+  if (cart.length === 0) {
+    list.innerHTML = '<div class="cart-empty">購物車是空的</div>';
+    return;
+  }
+  list.innerHTML = cart.map((c,i) => {
+    const m   = MEMBERS.find(mm => mm.id === c.memberId);
+    const sub = [c.note, c.txDate ? `(回溯:${c.txDate})` : ""].filter(Boolean).join(" · ");
+    return `<div class="cart-row">
+      <div class="cart-info">
+        <div class="cart-item-name">${m.emoji} ${m.name} · ${c.item}</div>
+        ${sub ? `<div class="cart-item-sub">${sub}</div>` : ""}
+      </div>
+      <span class="cart-amt">$${c.amount}</span>
+      <button class="cart-del" onclick="removeFromCart(${i})">✕</button>
+    </div>`;
+  }).join("");
+}
+
+function removeFromCart(i) { cart.splice(i,1); renderCart(); }
+function clearCart()       { cart = []; renderCart(); showToast("購物車已清空"); }
+
+// ════════════════════════════════════════════════════════════
+//  SUBMIT
+// ════════════════════════════════════════════════════════════
+async function submitAll() {
+  if (cart.length === 0) return showToast("⚠ 購物車是空的");
+  const btn = document.getElementById("submit-btn");
+  btn.disabled = true; btn.textContent = "⏳ 送出中…";
+
+  const groups = {};
+  cart.forEach(c => {
+    if (!groups[c.memberId]) groups[c.memberId] = [];
+    groups[c.memberId].push({ item:c.item, amount:c.amount, note:c.note, txDate:c.txDate });
+  });
+
+  const results = [];
+  let hasError  = false;
+
+  for (const [memberId, items] of Object.entries(groups)) {
+    try {
+      const byDate = {};
+      items.forEach(it => {
+        const key = it.txDate || "";
+        if (!byDate[key]) byDate[key] = [];
+        byDate[key].push(it);
+      });
+      for (const [txDate, dateItems] of Object.entries(byDate)) {
+        const data = await api({ action:"addTx", id:memberId, items:JSON.stringify(dateItems), txDate });
+        if (data.status === "success") {
+          results.push(data);
+          if (memberBalances[memberId]) memberBalances[memberId].balance = data.finalBalance;
+        } else {
+          hasError = true; showToast(`❌ ${memberId}: ${data.message}`);
+        }
+      }
+    } catch(e) { hasError = true; showToast("❌ 網路錯誤：" + e.message); }
+  }
+
+  if (results.length > 0) {
+    showSuccessModal(cart, results);
+    cart = [];
+    renderCart();
+    renderMemberGrid();
+  }
+  btn.disabled = false; btn.textContent = "✅ 全部送出記帳";
+}
+
+// ════════════════════════════════════════════════════════════
+//  SUCCESS MODAL
+// ════════════════════════════════════════════════════════════
+function showSuccessModal(cartSnap, results) {
+  const now     = new Date();
+  const pad     = n => String(n).padStart(2,'0');
+  const timeStr = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const total   = cartSnap.reduce((s,c) => s+c.amount, 0);
+
+  const finalBals = {};
+  results.forEach(r => { finalBals[r.memberId] = r.finalBalance; });
+
+  const itemRows = cartSnap.map(c => {
+    const m = MEMBERS.find(mm => mm.id === c.memberId);
+    return `<div class="receipt-item-row">
+      <span>${m.emoji} ${m.name} · ${c.item}${c.note ? ' ('+c.note+')' : ''}</span>
+      <span>$${c.amount}</span>
+    </div>`;
+  }).join("");
+
+  const balRows = Object.entries(finalBals).map(([id, bal]) => {
+    const m = MEMBERS.find(mm => mm.id === id);
+    return `<div class="receipt-row">
+      <span class="receipt-label">${m.id} 餘額</span>
+      <span class="receipt-colon">：</span>
+      <span class="receipt-val ${bal < 0 ? 'red' : 'green'}">$${bal}</span>
+    </div>`;
+  }).join("");
+
+  const hasTxDate = cartSnap.some(c => c.txDate);
+  const txDateRow = hasTxDate
+    ? `<div class="receipt-row">
+        <span class="receipt-label">回溯日期</span>
+        <span class="receipt-colon">：</span>
+        <span class="receipt-val accent">${cartSnap.find(c=>c.txDate)?.txDate || "—"}</span>
+      </div>` : "";
+
+  document.getElementById("receipt-content").innerHTML = `
+    <div class="receipt-row">
+      <span class="receipt-label">記帳時間</span>
+      <span class="receipt-colon">：</span>
+      <span class="receipt-val">${timeStr}</span>
+    </div>
+    ${txDateRow}
+    <hr class="receipt-divider">
+    <div class="receipt-items-title">交易項目明細</div>
+    ${itemRows}
+    <div class="receipt-total-row"><span>本次合計</span><span>$${total}</span></div>
+    <hr class="receipt-divider">
+    ${balRows}`;
+
+  const anyLow  = results.some(r => r.isLow);
+  const warnEl  = document.getElementById("success-warn");
+  if (anyLow) {
+    const names = results.filter(r => r.isLow).map(r => {
+      const m = MEMBERS.find(mm => mm.id === r.memberId);
+      return `${m.emoji} ${m.name}`;
+    }).join("、");
+    warnEl.textContent = `⚠️ 餘額不足：${names} 餘額偏低，請提醒儲值！`;
+    warnEl.classList.add("show");
+  } else {
+    warnEl.classList.remove("show");
+  }
+  document.getElementById("success-modal").classList.add("show");
+}
+
+function closeSuccessModal() { document.getElementById("success-modal").classList.remove("show"); }
+
+// ════════════════════════════════════════════════════════════
+//  OVERVIEW
+// ════════════════════════════════════════════════════════════
+async function loadOverview() {
+  document.getElementById("overview-content").innerHTML =
+    '<div class="loading-box"><div class="spinner"></div><br>載入中…</div>';
+  try {
+    const data = await api({ action:"overview" });
+    if (data.status !== "success") throw new Error(data.message);
+    renderOverview(data.members, data.lowLimit);
+  } catch(e) {
+    document.getElementById("overview-content").innerHTML = '<div class="empty-box">⚠ 載入失敗</div>';
+  }
+}
+
+function renderOverview(members, lowLimit) {
+  const html = members.map(m => {
+    const isLow    = m.balance < lowLimit;
+    const balClass = isLow ? "low" : (m.balance > 0 ? "ok" : "");
+    return `<div class="overview-member-card">
+      <div class="omc-header">
+        <span class="omc-emoji">${m.emoji}</span>
+        <div class="omc-info">
+          <div class="omc-id">${m.id}</div>
+          <div class="omc-name">${m.name}</div>
+        </div>
+        <span class="omc-bal ${balClass}">$${m.balance}</span>
+        <button class="omc-topup-btn" onclick="openTopupModal('${m.id}')">儲值 ＋</button>
+      </div>
+      ${isLow ? `<div class="low-warn">⚠️ 餘額偏低（低於 $${lowLimit}），請提醒 ${m.name} 儲值！</div>` : ""}
+    </div>`;
+  }).join("");
+  document.getElementById("overview-content").innerHTML = html || '<div class="empty-box">尚無成員資料</div>';
+}
+
+function openTopupModal(memberId) {
+  topupTargetId = memberId;
+  const m = MEMBERS.find(mm => mm.id === memberId);
+  document.getElementById("topup-modal-sub").textContent = `${m.emoji} ${m.name}（${m.id}）`;
+  document.getElementById("topup-amount").value = "";
+  document.getElementById("topup-note").value   = "";
+  document.getElementById("topup-modal").classList.add("show");
+}
+
+function closeTopupModal() {
+  document.getElementById("topup-modal").classList.remove("show");
+  topupTargetId = null;
+}
+
+async function confirmTopup() {
+  const amt  = parseInt(document.getElementById("topup-amount").value) || 0;
+  const note = document.getElementById("topup-note").value.trim();
+  if (amt <= 0) return showToast("⚠ 請輸入有效金額");
+  try {
+    const data = await api({ action:"topup", id:topupTargetId, amount:amt, note });
+    if (data.status === "success") {
+      showToast(`✓ ${data.memberName} 已儲值 $${amt}`);
+      closeTopupModal();
+      loadOverview();
+    } else showToast("❌ " + data.message);
+  } catch(e) { showToast("❌ 網路錯誤"); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  RECORDS
+// ════════════════════════════════════════════════════════════
+async function loadRecords() {
+  document.getElementById("rec-content").innerHTML =
+    '<div class="loading-box"><div class="spinner"></div><br>載入中…</div>';
+  ["stat-count","stat-expense","stat-topup"].forEach(id =>
+    document.getElementById(id).textContent = "—");
+  try {
+    const params = { action:"records" };
+    if (recFilterStartDate) params.startDate = recFilterStartDate;
+    if (recFilterEndDate)   params.endDate   = recFilterEndDate;
+    const data = await api(params);
+    if (data.status !== "success") throw new Error(data.message);
+    allRecords = data.records;
+    applyFilter();
+  } catch(e) {
+    document.getElementById("rec-content").innerHTML = '<div class="empty-box">⚠ 載入失敗</div>';
+  }
+}
+
+function applyFilter() {
+  const memberId = document.getElementById("rec-filter-member").value;
+  const type     = document.getElementById("rec-filter-type").value;
+
+  let filtered = allRecords.filter(r => {
+    if (memberId && r.id   !== memberId) return false;
+    if (type     && r.type !== type)     return false;
+    return true;
+  });
+
+  const totalExpense = filtered.filter(r => r.type==="扣款").reduce((s,r) => s+Math.abs(r.change), 0);
+  const totalTopup   = filtered.filter(r => r.type==="儲值").reduce((s,r) => s+r.change, 0);
+  document.getElementById("stat-count").textContent   = filtered.length;
+  document.getElementById("stat-expense").textContent = "$" + totalExpense;
+  document.getElementById("stat-topup").textContent   = "$" + totalTopup;
+
+  if (filtered.length === 0) {
+    document.getElementById("rec-content").innerHTML = '<div class="empty-box">📭 沒有符合的紀錄</div>';
+    return;
+  }
+
+  const groups = {};
+  filtered.forEach(r => {
+    const day = String(r.time).split(" ")[0] || "未知日期";
+    if (!groups[day]) groups[day] = [];
+    groups[day].push(r);
+  });
+
+  const html = Object.keys(groups).sort((a,b) => b.localeCompare(a)).map(day => {
+    const entries = groups[day].map(r => {
+      const m       = MEMBERS.find(mm => mm.id === r.id);
+      const isTopup = r.type === "儲值";
+      const time    = String(r.time).split(" ")[1] || "";
+      const noteStr = r.note ? ` · ${r.note}` : "";
+      const txStr   = r.txDate ? ` 📅${r.txDate}` : "";
+      return `<div class="tl-entry ${isTopup ? 'topup' : ''}">
+        <div class="tl-entry-top">
+          <span class="tl-who">${m?.emoji||'👤'} ${r.name}
+            <span class="tl-badge ${isTopup?'topup':''}">${r.type}</span>
+          </span>
+          <span class="tl-amt ${isTopup?'topup':''}">${isTopup?'+':'-'}$${Math.abs(r.change)}</span>
+        </div>
+        <div class="tl-entry-bot">
+          <span class="tl-item">${r.item}${noteStr}${txStr}</span>
+          <span class="tl-time">${time}</span>
+        </div>
+      </div>`;
+    }).join("");
+    return `<div class="tl-day"><div class="tl-day-label">${day}</div>${entries}</div>`;
+  }).join("");
+
+  document.getElementById("rec-content").innerHTML = `<div class="timeline">${html}</div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  MY PAGE
+// ════════════════════════════════════════════════════════════
+async function loadMyData(memberId) {
+  document.getElementById("my-content").innerHTML =
+    '<div class="loading-box"><div class="spinner"></div><br>載入中…</div>';
+  try {
+    const data = await api({ action:"mydata", id:memberId });
+    if (data.status !== "success") throw new Error(data.message);
+    const m      = data.member;
+    const member = MEMBERS.find(mm => mm.id === memberId);
+    const rows   = (data.records || []).map(r => {
+      const isTopup = r.type === "儲值";
+      return `<div class="my-row">
+        <div class="my-dot ${isTopup?'topup':''}"></div>
+        <div class="my-row-info">
+          <div class="my-row-item">${r.item}${r.note ? ' · '+r.note : ''}</div>
+          <div class="my-row-time">${r.time}${r.txDate ? ' 📅'+r.txDate : ''}</div>
+        </div>
+        <div class="my-row-amt ${isTopup?'topup':''}">${isTopup?'+':'-'}$${Math.abs(r.change)}</div>
+      </div>`;
+    }).join("");
+    document.getElementById("my-content").innerHTML = `
+      <div class="my-hero">
+        <div class="my-emoji">${member?.emoji||'👤'}</div>
+        <div class="my-id">${m.id}</div>
+        <div class="my-name">${m.name}</div>
+        <div class="my-bal-label">目前餘額</div>
+        <div class="my-bal ${m.isLow?'low':''}">${m.balance < 0 ? '-' : ''}$${Math.abs(m.balance)}</div>
+        <div class="my-low-warn ${m.isLow?'show':''}">⚠️ 餘額偏低，請記得儲值！</div>
+      </div>
+      <div class="my-history-wrap">${rows || '<div class="empty-box">尚無交易記錄</div>'}</div>`;
+  } catch(e) {
+    document.getElementById("my-content").innerHTML = '<div class="empty-box">⚠ 載入失敗，請重試</div>';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  CALENDAR
+// ════════════════════════════════════════════════════════════
+function openCalendar() {
+  const now      = new Date();
+  calState.year  = now.getFullYear();
+  calState.month = now.getMonth();
+  calState.sel1  = recFilterStartDate;
+  calState.sel2  = recFilterEndDate;
+  renderCalendar();
+  document.getElementById("cal-modal").classList.add("show");
+}
+
+function calNavMonth(d) {
+  calState.month += d;
+  if (calState.month < 0)  { calState.month = 11; calState.year--; }
+  if (calState.month > 11) { calState.month = 0;  calState.year++; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const { year, month } = calState;
+  document.getElementById("cal-month-label").textContent =
+    `${year} / ${String(month+1).padStart(2,'0')}`;
+  const firstDay    = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const today       = new Date();
+  const minDate     = new Date(); minDate.setMonth(minDate.getMonth()-6);
+  const dows        = ["日","一","二","三","四","五","六"];
+  let html          = dows.map(d => `<div class="cal-dow">${d}</div>`).join("");
+
+  for (let i=0; i<firstDay; i++) html += `<div></div>`;
+  for (let d=1; d<=daysInMonth; d++) {
+    const thisDate = new Date(year, month, d);
+    const dateStr  = `${year}/${String(month+1).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+    const isToday  = thisDate.toDateString() === today.toDateString();
+    const disabled = thisDate < minDate || thisDate > today;
+    const selected = dateStr === calState.sel1 || dateStr === calState.sel2;
+    html += `<div class="cal-day${disabled?' disabled':''}${isToday?' today':''}${selected?' selected':''}"
+      onclick="${disabled ? '' : `calSelectDay('${dateStr}')`}">${d}</div>`;
+  }
+  document.getElementById("cal-grid").innerHTML = html;
+}
+
+function calSelectDay(dateStr) {
+  if (!calState.sel1 || (calState.sel1 && calState.sel2)) {
+    calState.sel1 = dateStr; calState.sel2 = null;
+  } else {
+    if (dateStr < calState.sel1) { calState.sel2 = calState.sel1; calState.sel1 = dateStr; }
+    else calState.sel2 = dateStr;
+  }
+  renderCalendar();
+}
+
+function confirmCalendar() {
+  if (calState.sel1) {
+    recFilterStartDate = calState.sel1;
+    recFilterEndDate   = calState.sel2 || calState.sel1;
+    document.getElementById("rec-date-range").textContent =
+      calState.sel2 ? `${calState.sel1} ~ ${calState.sel2}` : calState.sel1;
+    document.getElementById("rec-date-tag").style.display = "block";
+  }
+  document.getElementById("cal-modal").classList.remove("show");
+  loadRecords();
+}
+
+function clearCalendarSelection() { calState.sel1 = null; calState.sel2 = null; renderCalendar(); }
+
+function clearDateFilter() {
+  recFilterStartDate = null; recFilterEndDate = null;
+  document.getElementById("rec-date-tag").style.display = "none";
+  loadRecords();
+}
+
+// ════════════════════════════════════════════════════════════
+//  QR SCAN
+// ════════════════════════════════════════════════════════════
+let qrStream = null, qrAnimFrame = null;
+
+async function openQRScan() {
+  try {
+    qrStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment" } });
+    const video = document.getElementById("qr-video");
+    video.srcObject = qrStream;
+    document.getElementById("qr-overlay").classList.add("show");
+    video.onloadedmetadata = () => { video.play(); scanQR(); };
+  } catch(e) { showToast("❌ 無法開啟相機：" + e.message); }
+}
+
+function scanQR() {
+  const video = document.getElementById("qr-video");
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    const canvas  = document.createElement("canvas");
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx     = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code      = jsQR(imageData.data, imageData.width, imageData.height);
+    if (code) {
+      const val    = code.data.trim();
+      closeQRScan();
+      const member = MEMBERS.find(m => m.id === val);
+      if (member) {
+        enterApp('viewer', TOKEN_VIEW, val);
+      } else {
+        showToast("❌ 無效的 QR Code");
+        document.getElementById("login-screen").style.display = "";
+      }
+      return;
+    }
+  }
+  qrAnimFrame = requestAnimationFrame(scanQR);
+}
+
+function closeQRScan() {
+  if (qrAnimFrame) cancelAnimationFrame(qrAnimFrame);
+  if (qrStream)    qrStream.getTracks().forEach(t => t.stop());
+  qrStream = null;
+  document.getElementById("qr-overlay").classList.remove("show");
+}
+
+// ════════════════════════════════════════════════════════════
+//  API HELPER
+// ════════════════════════════════════════════════════════════
+async function api(params) {
+  params.token = currentToken || TOKEN_VIEW;
+  const url    = SCRIPT_URL + "?" + new URLSearchParams(params).toString();
+  const res    = await fetch(url);
+  const text   = await res.text();
+  return JSON.parse(text);
+}
+
+// ════════════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+// ════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════
+function init() {
+  renderItemChips();
+  renderCart();
+  renderMemberGrid();
+
+  // 填充紀錄頁篩選選單
+  const sel = document.getElementById("rec-filter-member");
+  MEMBERS.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value       = m.id;
+    opt.textContent = `${m.emoji} ${m.name} (${m.id})`;
+    sel.appendChild(opt);
+  });
+}
+
+init();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log("SW:", reg.scope))
+      .catch(err => console.warn("SW error:", err));
+  });
+}
 </script>
 </body>
 </html>
