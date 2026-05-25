@@ -134,4 +134,321 @@
           <button onclick="addAmount(50)">+50</button>
         </div>
         
-        <label>交易項目 (單選)</
+        <label>交易項目 (單選)</label>
+        <div class="grid-3" id="item-grid">
+          <button class="item-opt selected" onclick="selectItem(this, '飲料')">飲料</button>
+          <button class="item-opt" onclick="selectItem(this, '午餐')">午餐</button>
+          <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
+          <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
+          <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
+          <button class="item-opt" onclick="selectItem(this, '預留4')">預留4</button>
+        </div>
+        
+        <div class="cart-box">
+          <div style="font-weight: bold; margin-bottom: 5px;">購物車暫存：</div>
+          <div id="cart-list">（無項目）</div>
+        </div>
+        
+        <button class="btn" style="background-color: #27ae60; margin-bottom: 10px;" onclick="addToCart()">加入購物車</button>
+        <button class="btn" id="btn-submit-tx" onclick="submitCartTransaction()">確認提交結帳</button>
+      </div>
+    </div>
+    
+    <button class="btn btn-secondary" onclick="logout()">登出 / 切換帳號</button>
+  </div>
+</div>
+
+<div class="modal" id="success-modal">
+  <div class="modal-content">
+    <div class="modal-title">交易成功</div>
+    
+    <div class="kv-container">
+      <div class="kv-row"><div class="kv-label">ID</div><div class="kv-colon">:</div><div class="kv-value" id="res-id"></div></div>
+      <div class="kv-row"><div class="kv-label">姓名</div><div class="kv-colon">:</div><div class="kv-value" id="res-name"></div></div>
+      <div class="kv-row"><div class="kv-label">交易項目</div><div class="kv-colon">:</div><div class="kv-value" id="res-items"></div></div>
+      <div class="kv-row"><div class="kv-label">原金額</div><div class="kv-colon">:</div><div class="kv-value" id="res-old"></div></div>
+      <div class="kv-row"><div class="kv-label">變動金額</div><div class="kv-colon">:</div><div class="kv-value" id="res-change"></div></div>
+      <div class="kv-row"><div class="kv-label">新餘額</div><div class="kv-colon">:</div><div class="kv-value" id="res-new"></div></div>
+    </div>
+    
+    <button class="btn" onclick="closeModal()">關閉並繼續</button>
+  </div>
+</div>
+
+<script>
+  // 請置換成您的 Google Apps Script 網頁應用程式網址
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/xxxx/exec"; 
+
+  let currentRole = 'manager'; 
+  let loggedInUser = null;     
+  let scannedUser = null;      
+  let html5QrcodeScanner = null;
+  let selectedItemName = '飲料';
+  let shoppingCart = [];
+
+  // 音效產生器 (Web Audio API)
+  function playBeep(type) {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime); // 音量固定為 0.4
+      
+      if (type === 'scan') {
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.1); // 短逼聲
+      } else if (type === 'success') {
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.15); // 雙音節成功聲
+        oscillator.stop(audioCtx.currentTime + 0.35);
+      }
+    } catch (e) {
+      console.log("音效撥放失敗:", e);
+    }
+  }
+
+  // 修正 BUG 1：改用屬性選擇器來精準識別與切換，完全避開全域 event
+  function switchRole(role) {
+    currentRole = role;
+    
+    // 移除所有角色按鈕的 active 狀態
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    
+    // 根據選擇的角色為對應的按鈕加上 active
+    if (role === 'manager') {
+      document.querySelector("button[onclick*='manager']").classList.add('active');
+    } else {
+      document.querySelector("button[onclick*='user']").classList.add('active');
+    }
+    
+    const passGroup = document.getElementById('pass-group');
+    if (role === 'user') {
+      passGroup.style.display = 'none';
+    } else {
+      passGroup.style.display = 'flex';
+    }
+  }
+
+  // 修正 BUG 2：修正原代碼中斷錯誤，確保進入系統按鈕能夠正常對接 fetch API
+  function handleLogin() {
+    const id = document.getElementById('login-id').value.trim().toUpperCase();
+    const pass = document.getElementById('login-pass').value.trim();
+    
+    if(!id) { alert("請輸入ID"); return; }
+    if(currentRole === 'manager' && !pass) { alert("請輸入密碼"); return; }
+    
+    const loginBtn = document.querySelector("#view-login .btn");
+    loginBtn.disabled = true;
+    loginBtn.innerText = "驗證中...";
+    
+    // 呼叫 GAS 後端
+    fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "loginAndFetch",
+        id: id,
+        password: pass,
+        isManager: (currentRole === 'manager')
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        loggedInUser = data;
+        showMainPanel();
+      } else {
+        alert("錯誤: " + data.message);
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("網路連線失敗或 GAS 網址設定錯誤");
+    })
+    .finally(() => {
+      loginBtn.disabled = false;
+      loginBtn.innerText = "進入系統";
+    });
+  }
+
+  // 顯示操作面板
+  function showMainPanel() {
+    document.getElementById('view-login').classList.remove('active');
+    document.getElementById('view-main').classList.add('active');
+    document.getElementById('roleSelector').style.display = 'none';
+    
+    if (currentRole === 'user') {
+      document.getElementById('panel-title').innerText = "個人餘額查詢";
+      document.getElementById('scan-btn').style.display = 'none'; 
+      document.getElementById('manager-action-area').style.display = 'none';
+      
+      // 直接顯示自己的數據
+      scannedUser = loggedInUser;
+      showTargetUserInfo();
+    } else {
+      document.getElementById('panel-title').innerText = "代買工作台 (" + loggedInUser.name + ")";
+      document.getElementById('scan-btn').style.display = 'block';
+      document.getElementById('target-user-info').style.display = 'none';
+    }
+  }
+
+  // 啟動相機掃描
+  function startScanning() {
+    if (html5QrcodeScanner) {
+      try { html5QrcodeScanner.stop(); } catch(e){}
+    }
+    
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    html5QrcodeScanner.start(
+      { facingMode: "environment" }, 
+      { fps: 10, qrbox: 250 },
+      (qrCodeMessage) => {
+        playBeep('scan');
+        html5QrcodeScanner.stop(); 
+        fetchTargetUser(qrCodeMessage.trim().toUpperCase());
+      },
+      (errorMessage) => { /* 掃描中不跳錯誤 */ }
+    ).catch(err => {
+      alert("無法啟動相機，請確認網頁是否有 HTTPS 且已允許相機權限。");
+    });
+  }
+
+  // 讀取被代買人資訊
+  function fetchTargetUser(targetId) {
+    fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "loginAndFetch", id: targetId, password: "", isManager: false })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        scannedUser = data;
+        shoppingCart = []; 
+        updateCartUI();
+        showTargetUserInfo();
+      } else {
+        alert("掃描失敗: " + data.message);
+      }
+    });
+  }
+
+  // 顯示被代買人名片
+  function showTargetUserInfo() {
+    document.getElementById('target-user-info').style.display = 'block';
+    document.getElementById('info-id').innerText = scannedUser.id;
+    document.getElementById('info-name').innerText = scannedUser.name;
+    document.getElementById('info-balance').innerText = scannedUser.balance;
+    document.getElementById('tx-amount').value = 0;
+  }
+
+  // 快捷金額計算
+  function addAmount(val) {
+    let input = document.getElementById('tx-amount');
+    input.value = Number(input.value) + val;
+  }
+
+  // 切換項目選擇
+  function selectItem(element, name) {
+    document.querySelectorAll('.item-opt').forEach(b => b.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedItemName = name;
+  }
+
+  // 加入購物車功能
+  function addToCart() {
+    let amt = Number(document.getElementById('tx-amount').value);
+    if(amt === 0) { alert("金額不能為0"); return; }
+    
+    shoppingCart.push({
+      name: selectedItemName,
+      amount: amt
+    });
+    
+    updateCartUI();
+    document.getElementById('tx-amount').value = 0; 
+  }
+
+  // 更新購物車顯示介面
+  function updateCartUI() {
+    const listDiv = document.getElementById('cart-list');
+    if (shoppingCart.length === 0) {
+      listDiv.innerHTML = "（無項目）";
+      return;
+    }
+    let html = "";
+    shoppingCart.forEach((item, index) => {
+      html += `<div class="cart-item"><span>${item.name}</span><span>${item.amount > 0 ? '+' : ''}${item.amount} 元</span></div>`;
+    });
+    listDiv.innerHTML = html;
+  }
+
+  // 提交購物車交易到 GAS 後端
+  function submitCartTransaction() {
+    if(shoppingCart.length === 0) { alert("購物車目前沒有項目，請先加入項目。"); return; }
+    
+    document.getElementById('btn-submit-tx').disabled = true;
+    document.getElementById('btn-submit-tx').innerText = "交易處理中...";
+
+    fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "submitTransaction",
+        managerId: loggedInUser.id,
+        userId: scannedUser.id,
+        cartItems: shoppingCart
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        playBeep('success');
+        showSuccessModal(data);
+      } else {
+        alert("交易失敗: " + data.message);
+      }
+    })
+    .finally(() => {
+      document.getElementById('btn-submit-tx').disabled = false;
+      document.getElementById('btn-submit-tx').innerText = "確認提交結帳";
+    });
+  }
+
+  // 顯示完全對齊的 20px 結果彈出視窗
+  function showSuccessModal(data) {
+    document.getElementById('res-id').innerText = data.id;
+    document.getElementById('res-name').innerText = data.name;
+    document.getElementById('res-items').innerText = data.itemsText;
+    document.getElementById('res-old').innerText = data.startBalance + " 元";
+    document.getElementById('res-change').innerText = (data.totalChange > 0 ? "+" : "") + data.totalChange + " 元";
+    document.getElementById('res-new').innerText = data.endBalance + " 元";
+    
+    document.getElementById('success-modal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('success-modal').classList.remove('active');
+    shoppingCart = [];
+    updateCartUI();
+    fetchTargetUser(scannedUser.id);
+  }
+
+  function logout() {
+    loggedInUser = null;
+    scannedUser = null;
+    shoppingCart = [];
+    if(html5QrcodeScanner) { try { html5QrcodeScanner.stop(); } catch(e){} }
+    document.getElementById('view-main').classList.remove('active');
+    document.getElementById('view-login').classList.add('active');
+    document.getElementById('roleSelector').style.display = 'flex';
+    document.getElementById('login-id').value = "";
+    document.getElementById('login-pass').value = "";
+  }
+</script>
+</body>
+</html>
