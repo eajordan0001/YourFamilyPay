@@ -149,7 +149,7 @@
         <div class="grid-3" id="item-grid">
           <button class="item-opt selected" onclick="selectItem(this, '飲料')">飲料</button>
           <button class="item-opt" onclick="selectItem(this, '午餐')">午餐</button>
-          <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
+          <button class="item-opt" onclick="selectItem(this, '文具')">文具</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
           <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
@@ -196,7 +196,7 @@
   let html5QrcodeScanner = null;
   let selectedItemName = '飲料';
   let shoppingCart = [];
-  let isScanningActive = false; 
+  let canScan = true; // 關鍵解碼防禦鎖：用最頂層邏輯直接切斷硬件多重回傳，免關相機
 
   function playBeep(type) {
     try {
@@ -283,7 +283,7 @@
     
     if (currentRole === 'user') {
       document.getElementById('panel-title').innerText = "歡迎！" + loggedInUser.name;
-      document.getElementById('scanner-section').style.display = 'none'; // 自查模式不需要相機區塊
+      document.getElementById('scanner-section').style.display = 'none'; 
       document.getElementById('panel-divider').style.display = 'none';
       document.getElementById('manager-action-area').style.display = 'none'; 
       
@@ -300,16 +300,16 @@
     }
   }
 
+  // 權限優化方案：相機實體只建立一次，後續絕不呼叫 .stop()，完美鎖定權限
   function startScanning() {
-    if (isScanningActive) return;
-    isScanningActive = true;
+    canScan = true; // 開啟解碼接收鎖
     
-    // 確保重新開啟相機時，相機區塊是可見的
+    // 確保重新開啟時，隱藏的相機區塊再度顯現
     document.getElementById('scanner-section').style.display = 'block';
     document.getElementById('panel-divider').style.display = 'block';
     
     if (html5QrcodeScanner) {
-      try { html5QrcodeScanner.stop(); } catch(e){}
+      return; // 如果相機早就在背景開啟了，直接還原變數與 UI 即可，100% 不會跳出權限確認！
     }
     
     html5QrcodeScanner = new Html5Qrcode("reader");
@@ -317,23 +317,17 @@
       { facingMode: "environment" }, 
       { fps: 10, qrbox: 250 },
       (qrCodeMessage) => {
-        isScanningActive = false;
-        playBeep('scan');
+        // 核心防禦：如果解碼鎖已關閉，在百萬分之一秒內直接攔截，不跑任何邏輯、不逼聲、不卡死
+        if (!canScan) return; 
+        canScan = false; 
         
-        try {
-          html5QrcodeScanner.stop().then(() => {
-            fetchTargetUser(qrCodeMessage.trim().toUpperCase());
-          }).catch(err => {
-            fetchTargetUser(qrCodeMessage.trim().toUpperCase());
-          });
-        } catch(e) {
-          fetchTargetUser(qrCodeMessage.trim().toUpperCase());
-        }
+        playBeep('scan');
+        fetchTargetUser(qrCodeMessage.trim().toUpperCase());
       },
       (errorMessage) => { }
     ).catch(err => {
       console.error(err);
-      isScanningActive = false;
+      canScan = true;
     });
   }
 
@@ -368,7 +362,7 @@
   }
 
   function showTargetUserInfo() {
-    // 優化：成功載入成員資訊後，立刻把整個相機與按鈕區塊隱藏，讓面板往上提
+    // 頁面長度優化：成功載入成員資訊後，直接將相機區塊 display: none 隱藏，但「完全不關閉相機串流」！
     if (currentRole === 'manager') {
       document.getElementById('scanner-section').style.display = 'none';
       document.getElementById('panel-divider').style.display = 'none';
@@ -477,7 +471,7 @@
     if (currentRole === 'manager') {
       document.getElementById('target-user-info').style.display = 'none'; 
       scannedUser = null;
-      // 優化：點擊關閉時，startScanning 會幫我們把相機區塊重新設回 display: block 並開啟鏡頭
+      // 點擊關閉並繼續時，一鍵重啟解碼鎖與顯現 UI，零時差直接刷下一個人，完全不彈權限確認視窗！
       startScanning(); 
     } else {
       document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
@@ -489,7 +483,7 @@
     loggedInUser = null;
     scannedUser = null;
     shoppingCart = [];
-    isScanningActive = false;
+    canScan = true;
     if(html5QrcodeScanner) { 
       try { html5QrcodeScanner.stop(); } catch(e){} 
       html5QrcodeScanner = null;
