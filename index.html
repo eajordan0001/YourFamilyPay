@@ -150,7 +150,7 @@
           <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
-          <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
+          <button class="item-opt" onclick="selectItem(this, '預留4')">預留4</button>
         </div>
         
         <div class="cart-box">
@@ -194,7 +194,7 @@
   let html5QrcodeScanner = null;
   let selectedItemName = '飲料';
   let shoppingCart = [];
-  let isScannerRunning = false; // 用於追蹤相機控制狀態
+  let canScan = true; // 修正：精準控制解碼鎖，防止重複觸發與卡死
 
   function playBeep(type) {
     try {
@@ -296,14 +296,11 @@
     }
   }
 
+  // 修正：標準相機啟動流程，一生只初始化一次，徹底避免重複要求權限
   function startScanning() {
-    // 修正：如果相機本來就開著，直接維持開啟，不重新建構以防重新索取權限
-    if (isScannerRunning) {
-      return; 
-    }
-    
+    canScan = true; 
     if (html5QrcodeScanner) {
-      try { html5QrcodeScanner.stop(); } catch(e){}
+      return; // 已經存在掃描執行個體，直接沿用不重複建立
     }
     
     html5QrcodeScanner = new Html5Qrcode("reader");
@@ -311,18 +308,17 @@
       { facingMode: "environment" }, 
       { fps: 10, qrbox: 250 },
       (qrCodeMessage) => {
-        // 掃描成功邏輯
-        playBeep('scan');
+        // 修正：利用解碼鎖擋掉毫秒內重疊的掃描事件
+        if (!canScan) return; 
+        canScan = false; 
         
-        // 修正：不完全 .stop() 關閉相機通道，只暫時停止解析 QR 碼，保持相機活躍
-        isScannerRunning = false; 
+        playBeep('scan');
         fetchTargetUser(qrCodeMessage.trim().toUpperCase());
       },
       (errorMessage) => { }
-    ).then(() => {
-      isScannerRunning = true;
-    }).catch(err => {
+    ).catch(err => {
       alert("無法啟動相機，請確認網頁是否有 HTTPS 且已允許相機權限。");
+      canScan = true;
     });
   }
 
@@ -346,14 +342,13 @@
         showTargetUserInfo();
       } else {
         alert("讀取成員失敗: " + data.message);
-        // 如果讀取失敗，無痛回到掃描狀態
-        resumeScanningAfterModal();
+        canScan = true; // 失敗時解除鎖定，讓代買人直接掃下一個或重掃
       }
     })
     .catch(err => {
       console.error(err);
       alert("讀取成員時網路連線發生錯誤");
-      resumeScanningAfterModal();
+      canScan = true;
     });
   }
 
@@ -391,13 +386,11 @@
     input.value = ""; 
   }
 
-  // 修正：新增移除單筆暫存項目的功能
   function removeFromCart(index) {
     shoppingCart.splice(index, 1);
     updateCartUI();
   }
 
-  // 修正：渲染包含[刪除]按鈕的購物車列表
   function updateCartUI() {
     const listDiv = document.getElementById('cart-list');
     if (shoppingCart.length === 0) {
@@ -455,6 +448,7 @@
     document.getElementById('success-modal').classList.add('active');
   }
 
+  // 修正：關閉成功彈窗後，安全重啟鏡頭監聽機制
   function closeModal() {
     document.getElementById('success-modal').classList.remove('active');
     shoppingCart = [];
@@ -463,35 +457,10 @@
     if (currentRole === 'manager') {
       document.getElementById('target-user-info').style.display = 'none'; 
       scannedUser = null;
-      resumeScanningAfterModal(); // 修正：完全無痛地重啟掃描機制，不需要重複允許相機
+      canScan = true; // 修正：僅需一鍵解鎖，鏡頭完全不卡頓、直接可辨識下一個人！
     } else {
       document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
       document.getElementById('tx-amount').value = ""; 
-    }
-  }
-
-  // 修正：專門處理連續掃描時的無感相機重啟，確保不掉權限
-  function resumeScanningAfterModal() {
-    if (html5QrcodeScanner) {
-      // 藉由重新套用 start 流程但不調用 stop()，確保原鏡頭串流存活
-      isScannerRunning = false;
-      html5QrcodeScanner.start(
-        { facingMode: "environment" }, 
-        { fps: 10, qrbox: 250 },
-        (qrCodeMessage) => {
-          playBeep('scan');
-          fetchTargetUser(qrCodeMessage.trim().toUpperCase());
-        },
-        (errorMessage) => { }
-      ).then(() => {
-        isScannerRunning = true;
-      }).catch(err => {
-        // 如果無縫重啟失敗，降級為傳統重開法
-        isScannerRunning = false;
-        startScanning();
-      });
-    } else {
-      startScanning();
     }
   }
 
@@ -499,8 +468,11 @@
     loggedInUser = null;
     scannedUser = null;
     shoppingCart = [];
-    isScannerRunning = false;
-    if(html5QrcodeScanner) { try { html5QrcodeScanner.stop(); } catch(e){} }
+    canScan = true;
+    if(html5QrcodeScanner) { 
+      try { html5QrcodeScanner.stop(); } catch(e){} 
+      html5QrcodeScanner = null; // 登出時徹底清空，下次進來可重新 initialization
+    }
     document.getElementById('view-main').classList.remove('active');
     document.getElementById('view-login').classList.add('active');
     document.getElementById('roleSelector').style.display = 'flex';
