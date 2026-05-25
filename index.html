@@ -97,7 +97,7 @@
   <div id="view-login" class="view-section active">
     <div class="form-group">
       <label for="login-id">帳號 (ID)</label>
-      <input type="text" id="login-id" placeholder="例如: YF001 或 admin">
+      <input type="text" id="login-id" placeholder="例如: YF001 或 ADMIN01">
     </div>
     <div class="form-group" id="pass-group">
       <label for="login-pass">密碼</label>
@@ -109,10 +109,12 @@
   <div id="view-main" class="view-section">
     <h3 id="panel-title">代買交易面板</h3>
     
-    <div style="margin-bottom: 15px;">
-      <button class="btn" id="scan-btn" onclick="startScanning()">開始掃描成員 QR</button>
+    <div id="scanner-section">
+      <div style="margin-bottom: 15px;">
+        <button class="btn" id="scan-btn" onclick="startScanning()">開始掃描成員 QR</button>
+      </div>
+      <div id="reader"></div>
     </div>
-    <div id="reader"></div>
     
     <hr id="panel-divider" style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
     
@@ -147,7 +149,7 @@
         <div class="grid-3" id="item-grid">
           <button class="item-opt selected" onclick="selectItem(this, '飲料')">飲料</button>
           <button class="item-opt" onclick="selectItem(this, '午餐')">午餐</button>
-          <button class="item-opt" onclick="selectItem(this, '文具')">文具</button>
+          <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
           <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
@@ -194,7 +196,7 @@
   let html5QrcodeScanner = null;
   let selectedItemName = '飲料';
   let shoppingCart = [];
-  let isScanningActive = false; // 控制同時間只有一個鏡頭實體在跑
+  let isScanningActive = false; 
 
   function playBeep(type) {
     try {
@@ -281,7 +283,7 @@
     
     if (currentRole === 'user') {
       document.getElementById('panel-title').innerText = "歡迎！" + loggedInUser.name;
-      document.getElementById('scan-btn').style.display = 'none'; 
+      document.getElementById('scanner-section').style.display = 'none'; // 自查模式不需要相機區塊
       document.getElementById('panel-divider').style.display = 'none';
       document.getElementById('manager-action-area').style.display = 'none'; 
       
@@ -289,20 +291,22 @@
       showTargetUserInfo();
     } else {
       document.getElementById('panel-title').innerText = "代買工作台 (" + loggedInUser.id + ")";
-      document.getElementById('scan-btn').style.display = 'block';
+      document.getElementById('scanner-section').style.display = 'block';
       document.getElementById('panel-divider').style.display = 'block';
       document.getElementById('manager-action-area').style.display = 'block'; 
       document.getElementById('target-user-info').style.display = 'none';
       
-      // 登入後直接貼心幫忙開啟掃描，完全自動化
       startScanning();
     }
   }
 
-  // 終極修復：一讀到就立刻徹底關閉相機串流，拒絕並行訊號造成的瀏覽器假死
   function startScanning() {
     if (isScanningActive) return;
     isScanningActive = true;
+    
+    // 確保重新開啟相機時，相機區塊是可見的
+    document.getElementById('scanner-section').style.display = 'block';
+    document.getElementById('panel-divider').style.display = 'block';
     
     if (html5QrcodeScanner) {
       try { html5QrcodeScanner.stop(); } catch(e){}
@@ -313,7 +317,6 @@
       { facingMode: "environment" }, 
       { fps: 10, qrbox: 250 },
       (qrCodeMessage) => {
-        // 終極修復點：讀取成功的百萬分之一秒內，立刻執行物理性關閉鏡頭，阻止下一次解碼
         isScanningActive = false;
         playBeep('scan');
         
@@ -321,7 +324,6 @@
           html5QrcodeScanner.stop().then(() => {
             fetchTargetUser(qrCodeMessage.trim().toUpperCase());
           }).catch(err => {
-            // 防禦性降級處理
             fetchTargetUser(qrCodeMessage.trim().toUpperCase());
           });
         } catch(e) {
@@ -355,7 +357,7 @@
         showTargetUserInfo();
       } else {
         alert("讀取成員失敗: " + data.message);
-        startScanning(); // 失敗時重新開鏡頭
+        startScanning(); 
       }
     })
     .catch(err => {
@@ -366,6 +368,12 @@
   }
 
   function showTargetUserInfo() {
+    // 優化：成功載入成員資訊後，立刻把整個相機與按鈕區塊隱藏，讓面板往上提
+    if (currentRole === 'manager') {
+      document.getElementById('scanner-section').style.display = 'none';
+      document.getElementById('panel-divider').style.display = 'none';
+    }
+    
     document.getElementById('target-user-info').style.display = 'block';
     document.getElementById('info-id').innerText = scannedUser.id;
     document.getElementById('info-name').innerText = scannedUser.name;
@@ -469,7 +477,7 @@
     if (currentRole === 'manager') {
       document.getElementById('target-user-info').style.display = 'none'; 
       scannedUser = null;
-      // 終極修復點：藉由按下確認鍵的「使用者手勢」重新開鏡頭，100% 繼承權限，絕不重複彈窗，且完全排除假死問題！
+      // 優化：點擊關閉時，startScanning 會幫我們把相機區塊重新設回 display: block 並開啟鏡頭
       startScanning(); 
     } else {
       document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
