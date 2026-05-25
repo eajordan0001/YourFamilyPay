@@ -120,7 +120,7 @@
       <div id="manager-action-area">
         <div class="form-group">
           <label>交易金額視窗</label>
-          <input type="number" id="tx-amount" value="0" style="text-align: right;">
+          <input type="number" id="tx-amount" placeholder="0" style="text-align: right;">
         </div>
         
         <div class="grid-4">
@@ -213,18 +213,14 @@
     }
   }
 
-  // 修正優化：切換身分時，一律保持密碼輸入框顯示（因為兩者都需要密碼驗證）
   function switchRole(role) {
     currentRole = role;
     document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-    
     if (role === 'manager') {
       document.querySelector("button[onclick*='manager']").classList.add('active');
     } else {
       document.querySelector("button[onclick*='user']").classList.add('active');
     }
-    
-    // 一律保持顯示密碼框
     document.getElementById('pass-group').style.display = 'flex';
   }
 
@@ -245,7 +241,8 @@
         action: "loginAndFetch",
         id: id,
         password: pass,
-        isManager: (currentRole === 'manager')
+        isManager: (currentRole === 'manager'),
+        byManagerScan: false
       })
     })
     .then(res => res.json())
@@ -273,7 +270,6 @@
     document.getElementById('roleSelector').style.display = 'none';
     
     if (currentRole === 'user') {
-      // 一般成員自查餘額介面
       document.getElementById('panel-title').innerText = "歡迎！" + loggedInUser.name;
       document.getElementById('scan-btn').style.display = 'none'; 
       document.getElementById('panel-divider').style.display = 'none';
@@ -282,7 +278,6 @@
       scannedUser = loggedInUser;
       showTargetUserInfo();
     } else {
-      // 代買人工作面板
       document.getElementById('panel-title').innerText = "代買工作台 (" + loggedInUser.id + ")";
       document.getElementById('scan-btn').style.display = 'block';
       document.getElementById('panel-divider').style.display = 'block';
@@ -302,7 +297,6 @@
       (qrCodeMessage) => {
         playBeep('scan');
         html5QrcodeScanner.stop(); 
-        // 掃描扣款對象時，不需二次驗證密碼，直接至後端調取其資料
         fetchTargetUser(qrCodeMessage.trim().toUpperCase());
       },
       (errorMessage) => { }
@@ -311,33 +305,32 @@
     });
   }
 
+  // 修正：向後端調度資料時，明確加上 byManagerScan 標記，避開密碼攔截
   function fetchTargetUser(targetId) {
-    // 這裡僅供代買人掃描後取得該 ID 名單餘額使用
     fetch(GAS_WEB_APP_URL, {
       method: "POST",
-      body: JSON.stringify({ action: "loginAndFetch", id: targetId, password: "", isManager: false })
+      body: JSON.stringify({ 
+        action: "loginAndFetch", 
+        id: targetId, 
+        password: "", 
+        isManager: false,
+        byManagerScan: true 
+      })
     })
-    .then(res => {
-      // 由於後端加入了嚴格驗證，這裡抓取目標使用者時需要跳過密碼比對邏輯，或補上後端直通車
-      // 為了配合後端新邏輯，如傳入空密碼，後端已知為代買人調閱，此時前端改為直接讀取
-      return res.json();
-    })
+    .then(res => res.json())
     .then(data => {
-      // 如果後端因無密碼被擋，提示：若因新後端邏輯有異，可在後端單獨補足 bypass 
-      // 這裡如果順利返回則直接顯示
-      if(data.id) {
+      if(data.success) {
         scannedUser = data;
         shoppingCart = []; 
         updateCartUI();
         showTargetUserInfo();
       } else {
-        // 如果後端因密碼阻擋，可直接前端彈出
-        // 為了確保代買人掃描順暢，剛才後端對 isManager 做了判斷。這裡若因無密碼被阻擋，
-        // 修正方案已直接寫入上述最新後端邏輯中
-        scannedUser = { id: data.id || targetId, name: data.name || "讀取中...", balance: data.balance || 0 };
-        // 重新向後端發送特權調取（如果需要安全再加解密，這裡簡化）
-        showTargetUserInfo();
+        alert("讀取成員失敗: " + data.message);
       }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("讀取成員時網路連線發生錯誤");
     });
   }
 
@@ -346,17 +339,15 @@
     document.getElementById('info-id').innerText = scannedUser.id;
     document.getElementById('info-name').innerText = scannedUser.name;
     document.getElementById('info-balance').innerText = scannedUser.balance;
-    document.getElementById('tx-amount').value = 0;
+    document.getElementById('tx-amount').value = ""; // 修正：清空實體輸入框的值，讓 placeholder 發揮效果
   }
 
+  // 修正優化金額累加：避免輸入框為空字串時產生 NaN 錯誤
   function addAmount(val) {
     let input = document.getElementById('tx-amount');
-    input.value = Number(input.value) + val;
+    let currentVal = input.value === "" ? 0 : Number(input.value);
+    input.value = currentVal + val;
   }
-
-  document.querySelectorAll('.item-opt').forEach((btn, index) => {
-    if(index === 0) btn.classList.add('selected');
-  });
 
   function selectItem(element, name) {
     document.querySelectorAll('.item-opt').forEach(b => b.classList.remove('selected'));
@@ -365,7 +356,8 @@
   }
 
   function addToCart() {
-    let amt = Number(document.getElementById('tx-amount').value);
+    let input = document.getElementById('tx-amount');
+    let amt = input.value === "" ? 0 : Number(input.value);
     if(amt === 0) { alert("金額不能為0"); return; }
     
     shoppingCart.push({
@@ -374,7 +366,7 @@
     });
     
     updateCartUI();
-    document.getElementById('tx-amount').value = 0; 
+    input.value = ""; // 修正：加入購物車後，一律恢復為清空狀態（顯示半透明 0）
   }
 
   function updateCartUI() {
@@ -435,8 +427,8 @@
     document.getElementById('success-modal').classList.remove('active');
     shoppingCart = [];
     updateCartUI();
-    // 重新載入最新數據
     document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
+    document.getElementById('tx-amount').value = ""; // 修正：結帳關閉後維持清空
   }
 
   function logout() {
