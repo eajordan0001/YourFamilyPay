@@ -4,7 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>代買快速結帳系統</title>
+  
   <meta name="theme-color" content="#e8006e">
+  
+  <link rel="apple-touch-icon" sizes="192x192" href="https://raw.githubusercontent.com/Pikachu/Gengar-placeholder/main/icon192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="https://raw.githubusercontent.com/Pikachu/Gengar-placeholder/main/icon512.png">
+  
   <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22代買系統%22,%22short_name%22:%22代買%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23e8006e%22,%22icons%22:[{%22src%22:%22https://raw.githubusercontent.com/Pikachu/Gengar-placeholder/main/icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22https://raw.githubusercontent.com/Pikachu/Gengar-placeholder/main/icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
   
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -176,7 +181,7 @@
 </div>
 
 <script>
-  // 請置換成您的 Google Apps Script 網頁應用程式網址
+  // 已自動嵌入您的 Google Apps Script 網頁應用程式網址
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWhTmqG_g03-4wJlLRT3qrkJt58dYlnO-WIvY6jOFfueRIedRkHQOC_cNg4VI6YuCwww/exec"; 
 
   let currentRole = 'manager'; 
@@ -273,7 +278,7 @@
       document.getElementById('panel-title').innerText = "歡迎！" + loggedInUser.name;
       document.getElementById('scan-btn').style.display = 'none'; 
       document.getElementById('panel-divider').style.display = 'none';
-      document.getElementById('manager-action-area').style.display = 'none';
+      document.getElementById('manager-action-area').style.display = 'none'; 
       
       scannedUser = loggedInUser;
       showTargetUserInfo();
@@ -281,6 +286,7 @@
       document.getElementById('panel-title').innerText = "代買工作台 (" + loggedInUser.id + ")";
       document.getElementById('scan-btn').style.display = 'block';
       document.getElementById('panel-divider').style.display = 'block';
+      document.getElementById('manager-action-area').style.display = 'block'; 
       document.getElementById('target-user-info').style.display = 'none';
     }
   }
@@ -305,7 +311,6 @@
     });
   }
 
-  // 修正：向後端調度資料時，明確加上 byManagerScan 標記，避開密碼攔截
   function fetchTargetUser(targetId) {
     fetch(GAS_WEB_APP_URL, {
       method: "POST",
@@ -339,10 +344,9 @@
     document.getElementById('info-id').innerText = scannedUser.id;
     document.getElementById('info-name').innerText = scannedUser.name;
     document.getElementById('info-balance').innerText = scannedUser.balance;
-    document.getElementById('tx-amount').value = ""; // 修正：清空實體輸入框的值，讓 placeholder 發揮效果
+    document.getElementById('tx-amount').value = ""; 
   }
 
-  // 修正優化金額累加：避免輸入框為空字串時產生 NaN 錯誤
   function addAmount(val) {
     let input = document.getElementById('tx-amount');
     let currentVal = input.value === "" ? 0 : Number(input.value);
@@ -366,7 +370,7 @@
     });
     
     updateCartUI();
-    input.value = ""; // 修正：加入購物車後，一律恢復為清空狀態（顯示半透明 0）
+    input.value = ""; 
   }
 
   function updateCartUI() {
@@ -415,33 +419,4 @@
   function showSuccessModal(data) {
     document.getElementById('res-id').innerText = data.id;
     document.getElementById('res-name').innerText = data.name;
-    document.getElementById('res-items').innerText = data.itemsText;
-    document.getElementById('res-old').innerText = data.startBalance + " 元";
-    document.getElementById('res-change').innerText = (data.totalChange > 0 ? "+" : "") + data.totalChange + " 元";
-    document.getElementById('res-new').innerText = data.endBalance + " 元";
-    
-    document.getElementById('success-modal').classList.add('active');
-  }
-
-  function closeModal() {
-    document.getElementById('success-modal').classList.remove('active');
-    shoppingCart = [];
-    updateCartUI();
-    document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
-    document.getElementById('tx-amount').value = ""; // 修正：結帳關閉後維持清空
-  }
-
-  function logout() {
-    loggedInUser = null;
-    scannedUser = null;
-    shoppingCart = [];
-    if(html5QrcodeScanner) { try { html5QrcodeScanner.stop(); } catch(e){} }
-    document.getElementById('view-main').classList.remove('active');
-    document.getElementById('view-login').classList.add('active');
-    document.getElementById('roleSelector').style.display = 'flex';
-    document.getElementById('login-id').value = "";
-    document.getElementById('login-pass').value = "";
-  }
-</script>
-</body>
-</html>
+    document.getElementById('res-items').innerText
