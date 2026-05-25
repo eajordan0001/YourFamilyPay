@@ -150,7 +150,7 @@
           <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
-          <button class="item-opt" onclick="selectItem(this, '預留4')">預留4</button>
+          <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
         </div>
         
         <div class="cart-box">
@@ -194,7 +194,7 @@
   let html5QrcodeScanner = null;
   let selectedItemName = '飲料';
   let shoppingCart = [];
-  let isScannerPaused = false; // 用於判斷相機目前是否為暫停狀態
+  let canScan = true; // 修正：改用純前端變數控制解碼鎖，絕不調用自帶遮罩的 .pause()
 
   function playBeep(type) {
     try {
@@ -296,46 +296,29 @@
     }
   }
 
-  // 終極修正：初始化相機，並完美運用 pause/resume 狀態鏈
+  // 修正：徹底拋棄套件的 pause/resume，只靠變數鎖定。相機畫面永久保持動態流暢！
   function startScanning() {
+    canScan = true; 
     if (html5QrcodeScanner) {
-      if (isScannerPaused) {
-        // 如果只是暫停中，一鍵解凍繼續掃描，完全不更動權限
-        try {
-          html5QrcodeScanner.resume();
-          isScannerPaused = false;
-        } catch(e) {
-          console.error("相機重啟失敗，切換降級重開機制:", e);
-          forceRecreateScanner();
-        }
-      }
-      return;
+      return; 
     }
     
-    forceRecreateScanner();
-  }
-
-  // 強制建立全新掃描器實體
-  function forceRecreateScanner() {
-    isScannerPaused = false;
     html5QrcodeScanner = new Html5Qrcode("reader");
     html5QrcodeScanner.start(
       { facingMode: "environment" }, 
       { fps: 10, qrbox: 250 },
       (qrCodeMessage) => {
-        // 終極修正：一讀到二維碼，立刻下達 pause 指令！鎖死硬體，不再發送重複請求
-        if (isScannerPaused) return;
-        isScannerPaused = true;
+        // 修正：如果已經鎖定，直接無視條碼訊號。此處完全不調用 .pause()，因此絕無灰色遮罩！
+        if (!canScan) return; 
+        canScan = false; 
         
-        try { html5QrcodeScanner.pause(); } catch(e){}
         playBeep('scan');
-        
         fetchTargetUser(qrCodeMessage.trim().toUpperCase());
       },
       (errorMessage) => { }
     ).catch(err => {
       alert("無法啟動相機，請確認網頁是否有 HTTPS 且已允許相機權限。");
-      isScannerPaused = false;
+      canScan = true;
     });
   }
 
@@ -359,27 +342,14 @@
         showTargetUserInfo();
       } else {
         alert("讀取成員失敗: " + data.message);
-        resumeCameraSilently(); // 失敗則靜默重啟相機
+        canScan = true; // 讀取失敗時重新解鎖，即可馬上重掃
       }
     })
     .catch(err => {
       console.error(err);
       alert("讀取成員時網路連線發生錯誤");
-      resumeCameraSilently();
+      canScan = true;
     });
-  }
-
-  // 靜默重啟解凍鏡頭
-  function resumeCameraSilently() {
-    if (html5QrcodeScanner && isScannerPaused) {
-      try {
-        html5QrcodeScanner.resume();
-        isScannerPaused = false;
-      } catch(e) {
-        html5QrcodeScanner = null;
-        forceRecreateScanner();
-      }
-    }
   }
 
   function showTargetUserInfo() {
@@ -486,8 +456,8 @@
     if (currentRole === 'manager') {
       document.getElementById('target-user-info').style.display = 'none'; 
       scannedUser = null;
-      // 終極修正：此處呼叫 startScanning()，因為 isScannerPaused 為 true，它會直接安全解凍鏡頭！
-      startScanning(); 
+      // 修正：此處僅需還原變數鎖定！鏡頭完全維持動態，下一個人湊上來立刻辨識！
+      canScan = true; 
     } else {
       document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
       document.getElementById('tx-amount').value = ""; 
@@ -498,7 +468,7 @@
     loggedInUser = null;
     scannedUser = null;
     shoppingCart = [];
-    isScannerPaused = false;
+    canScan = true;
     if(html5QrcodeScanner) { 
       try { html5QrcodeScanner.stop(); } catch(e){} 
       html5QrcodeScanner = null;
