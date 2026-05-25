@@ -55,19 +55,20 @@
     .info-box { background: #fff0f5; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary-color); margin-bottom: 15px; font-size: 20px; }
     .info-box div { margin: 5px 0; }
     
-    /* 金額按鈕網格 (優化：每列改為5個，以容納-500與+500) */
+    /* 金額按鈕網格 */
     .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
     .grid-5 button { font-size: 18px; padding: 10px 0; background: #fff; border: 2px solid #f0a3c4; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; }
     .grid-5 button:active { background: #f0a3c4; color: white; }
     
-    /* 交易項目網格 (每列3個) */
+    /* 交易項目網格 */
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
     .grid-3 button { font-size: 20px; padding: 12px 0; background: #f8f9fa; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .grid-3 button.selected { background: var(--primary-color); color: white; border-color: var(--primary-color); }
     
     /* 購物車樣式 */
     .cart-box { background: #f9f9f9; border: 1px dashed #ccc; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 18px; }
-    .cart-item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #eee; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #eee; }
+    .cart-del-btn { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; font-weight: bold; padding: 2px 8px; }
     
     /* 交易成功彈出視窗 */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
@@ -193,6 +194,7 @@
   let html5QrcodeScanner = null;
   let selectedItemName = '飲料';
   let shoppingCart = [];
+  let isScannerRunning = false; // 用於追蹤相機控制狀態
 
   function playBeep(type) {
     try {
@@ -295,6 +297,11 @@
   }
 
   function startScanning() {
+    // 修正：如果相機本來就開著，直接維持開啟，不重新建構以防重新索取權限
+    if (isScannerRunning) {
+      return; 
+    }
+    
     if (html5QrcodeScanner) {
       try { html5QrcodeScanner.stop(); } catch(e){}
     }
@@ -304,12 +311,17 @@
       { facingMode: "environment" }, 
       { fps: 10, qrbox: 250 },
       (qrCodeMessage) => {
+        // 掃描成功邏輯
         playBeep('scan');
-        html5QrcodeScanner.stop(); 
+        
+        // 修正：不完全 .stop() 關閉相機通道，只暫時停止解析 QR 碼，保持相機活躍
+        isScannerRunning = false; 
         fetchTargetUser(qrCodeMessage.trim().toUpperCase());
       },
       (errorMessage) => { }
-    ).catch(err => {
+    ).then(() => {
+      isScannerRunning = true;
+    }).catch(err => {
       alert("無法啟動相機，請確認網頁是否有 HTTPS 且已允許相機權限。");
     });
   }
@@ -334,11 +346,14 @@
         showTargetUserInfo();
       } else {
         alert("讀取成員失敗: " + data.message);
+        // 如果讀取失敗，無痛回到掃描狀態
+        resumeScanningAfterModal();
       }
     })
     .catch(err => {
       console.error(err);
       alert("讀取成員時網路連線發生錯誤");
+      resumeScanningAfterModal();
     });
   }
 
@@ -376,6 +391,13 @@
     input.value = ""; 
   }
 
+  // 修正：新增移除單筆暫存項目的功能
+  function removeFromCart(index) {
+    shoppingCart.splice(index, 1);
+    updateCartUI();
+  }
+
+  // 修正：渲染包含[刪除]按鈕的購物車列表
   function updateCartUI() {
     const listDiv = document.getElementById('cart-list');
     if (shoppingCart.length === 0) {
@@ -384,7 +406,10 @@
     }
     let html = "";
     shoppingCart.forEach((item, index) => {
-      html += `<div class="cart-item"><span>${item.name}</span><span>${item.amount > 0 ? '+' : ''}${item.amount} 元</span></div>`;
+      html += `<div class="cart-item">
+                <span>${item.name}：${item.amount > 0 ? '+' : ''}${item.amount} 元</span>
+                <button class="cart-del-btn" onclick="removeFromCart(${index})">[刪除]</button>
+              </div>`;
     });
     listDiv.innerHTML = html;
   }
@@ -430,21 +455,43 @@
     document.getElementById('success-modal').classList.add('active');
   }
 
-  // 修正：點擊關閉視窗後，重置介面並自動重啟相機掃描
   function closeModal() {
     document.getElementById('success-modal').classList.remove('active');
     shoppingCart = [];
     updateCartUI();
     
-    // 如果是代買人操作，結帳完直接初始化並重新開啟掃描器
     if (currentRole === 'manager') {
-      document.getElementById('target-user-info').style.display = 'none'; // 隱藏上一個人的資料
+      document.getElementById('target-user-info').style.display = 'none'; 
       scannedUser = null;
-      startScanning(); // 直接自動啟動下一次掃描！
+      resumeScanningAfterModal(); // 修正：完全無痛地重啟掃描機制，不需要重複允許相機
     } else {
-      // 一般成員端則只更新餘額
       document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
       document.getElementById('tx-amount').value = ""; 
+    }
+  }
+
+  // 修正：專門處理連續掃描時的無感相機重啟，確保不掉權限
+  function resumeScanningAfterModal() {
+    if (html5QrcodeScanner) {
+      // 藉由重新套用 start 流程但不調用 stop()，確保原鏡頭串流存活
+      isScannerRunning = false;
+      html5QrcodeScanner.start(
+        { facingMode: "environment" }, 
+        { fps: 10, qrbox: 250 },
+        (qrCodeMessage) => {
+          playBeep('scan');
+          fetchTargetUser(qrCodeMessage.trim().toUpperCase());
+        },
+        (errorMessage) => { }
+      ).then(() => {
+        isScannerRunning = true;
+      }).catch(err => {
+        // 如果無縫重啟失敗，降級為傳統重開法
+        isScannerRunning = false;
+        startScanning();
+      });
+    } else {
+      startScanning();
     }
   }
 
@@ -452,6 +499,7 @@
     loggedInUser = null;
     scannedUser = null;
     shoppingCart = [];
+    isScannerRunning = false;
     if(html5QrcodeScanner) { try { html5QrcodeScanner.stop(); } catch(e){} }
     document.getElementById('view-main').classList.remove('active');
     document.getElementById('view-login').classList.add('active');
