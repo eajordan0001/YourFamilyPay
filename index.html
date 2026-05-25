@@ -7,10 +7,10 @@
   
   <meta name="theme-color" content="#e8006e">
   
-  <link rel="apple-touch-icon" sizes="192x192" href="https://raw.githubusercontent.com/Pikachu/Gengar-placeholder/main/icon192.png">
-  <link rel="apple-touch-icon" sizes="512x512" href="https://raw.githubusercontent.com/Pikachu/Gengar-placeholder/main/icon512.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon512.png">
   
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22代買系統%22,%22short_name%22:%22代買%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23e8006e%22,%22icons%22:[{%22src%22:%22https://raw.githubusercontent.com/Pikachu/Gengar-placeholder/main/icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22https://raw.githubusercontent.com/Pikachu/Gengar-placeholder/main/icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22代買系統%22,%22short_name%22:%22代買%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23e8006e%22,%22icons%22:[{%22src%22:%22icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
   
   <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -419,4 +419,33 @@
   function showSuccessModal(data) {
     document.getElementById('res-id').innerText = data.id;
     document.getElementById('res-name').innerText = data.name;
-    document.getElementById('res-items').innerText
+    document.getElementById('res-items').innerText = data.itemsText;
+    document.getElementById('res-old').innerText = data.startBalance + " 元";
+    document.getElementById('res-change').innerText = (data.totalChange > 0 ? "+" : "") + data.totalChange + " 元";
+    document.getElementById('res-new').innerText = data.endBalance + " 元";
+    
+    document.getElementById('success-modal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('success-modal').classList.remove('active');
+    shoppingCart = [];
+    updateCartUI();
+    document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
+    document.getElementById('tx-amount').value = ""; 
+  }
+
+  function logout() {
+    loggedInUser = null;
+    scannedUser = null;
+    shoppingCart = [];
+    if(html5QrcodeScanner) { try { html5QrcodeScanner.stop(); } catch(e){} }
+    document.getElementById('view-main').classList.remove('active');
+    document.getElementById('view-login').classList.add('active');
+    document.getElementById('roleSelector').style.display = 'flex';
+    document.getElementById('login-id').value = "";
+    document.getElementById('login-pass').value = "";
+  }
+</script>
+</body>
+</html>
