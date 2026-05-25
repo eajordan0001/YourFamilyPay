@@ -2,487 +2,436 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>代買管理系統</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>代買快速結帳系統</title>
+  <meta name="theme-color" content="#e8006e">
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22代買系統%22,%22short_name%22:%22代買%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23e8006e%22,%22icons%22:[{%22src%22:%22https://raw.githubusercontent.com/Pikachu/Gengar-placeholder/main/icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22https://raw.githubusercontent.com/Pikachu/Gengar-placeholder/main/icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
   
-  <!-- PWA 設定與圖示 -->
-  <meta name="theme-color" content="#E91E63">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  
-  <!-- 內嵌 PWA Manifest 機制 -->
-  <link rel="manifest" href="data:application/json,HtmlUrlEncode({
-    &quot;name&quot;: &quot;代買管理系統&quot;,
-    &quot;short_name&quot;: &quot;代買PWA&quot;,
-    &quot;start_url&quot;: &quot;.&quot;,
-    &quot;display&quot;: &quot;standalone&quot;,
-    &quot;background_color&quot;: &quot;#FAFAFA&quot;,
-    &quot;theme_color&quot;: &quot;#E91E63&quot;,
-    &quot;icons&quot;: [
-      { &quot;src&quot;: &quot;https://placehold.co/192x192/E91E63/ffffff?text=PWA&quot;, &quot;sizes&quot;: &quot;192x192&quot;, &quot;type&quot;: &quot;image/png&quot; },
-      { &quot;src&quot;: &quot;https://placehold.co/512x512/E91E63/ffffff?text=PWA&quot;, &quot;sizes&quot;: &quot;512x512&quot;, &quot;type&quot;: &quot;image/png&quot; }
-    ]
-  })">
-
-  <!-- 引入 QR-Code 掃描元件 -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
+    /* 全域樣式：亮色系與 20px 字體 */
     :root {
-      --primary-color: #E91E63;       /* 桃紅色主調 */
-      --primary-light: #FCE4EC;      /* 淺桃紅選中色 */
-      --bg-color: #FAFAFA;           /* 明亮背景色 */
-      --text-color: #333333;
-      --border-color: #E0E0E0;
+      --primary-color: #e8006e;
+      --bg-color: #f7f9fa;
+      --card-bg: #ffffff;
+      --text-color: #2c3e50;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      padding: 15px;
-      max-width: 600px;
-      margin: 0 auto;
-      overflow-x: hidden;
-    }
-
-    h2, h3 {
-      text-align: center;
-      margin-bottom: 15px;
-      color: var(--primary-color);
-    }
-
-    .card {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      border: 1px solid var(--border-color);
-    }
-
-    .role-toggle {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    .role-btn {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid var(--primary-color);
-      background: none;
-      color: var(--primary-color);
-      font-weight: bold;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .role-btn.active {
-      background: var(--primary-color);
-      color: #ffffff;
-    }
-
-    .login-inputs {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    input[type="text"], input[type="password"], input[type="number"] {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      font-size: 16px;
-    }
-
-    #reader {
-      width: 100%;
-      background: #000;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .action-btn {
-      width: 100%;
-      padding: 12px;
-      background: var(--primary-color);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: bold;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-
-    .info-row {
-      display: flex;
-      font-size: 18px;
-      margin-bottom: 8px;
-      border-bottom: 1px dashed var(--border-color);
-      padding-bottom: 4px;
-    }
-    .info-label {
-      width: 80px;
-      font-weight: bold;
-    }
-
-    /* 快速金額按鈕網格：每列4個 */
-    .grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .amt-btn {
-      padding: 10px 0;
-      background: #f0f0f0;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    /* 項目按鈕網格：每列3個 */
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .item-btn {
-      padding: 12px 0;
-      background: #ffffff;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      font-size: 15px;
-      cursor: pointer;
-    }
-
-    .item-btn.selected {
-      background: var(--primary-light);
-      border-color: var(--primary-color);
-      color: var(--primary-color);
-      font-weight: bold;
-    }
-
-    /* 彈出視窗：精準對齊格線，全文字 20px */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 9999;
-    }
-
-    .modal-content {
-      background: #ffffff;
-      width: 100%;
-      max-width: 400px;
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    .modal-title {
-      font-size: 20px;
-      font-weight: bold;
-      color: var(--primary-color);
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .modal-body {
-      display: grid;
-      grid-template-columns: 110px 1fr; 
-      row-gap: 12px;
-      font-size: 20px; 
-      margin-bottom: 20px;
-    }
-
-    .modal-label {
-      text-align: left;
-      font-weight: bold;
-    }
-
-    .modal-val {
-      text-align: left;
-    }
-
-    .hidden {
-      display: none !important;
-    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; font-size: 20px; }
+    
+    .container { max-width: 500px; margin: 0 auto; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    h2, h3 { color: var(--primary-color); text-align: center; margin-top: 0; font-size: 24px; }
+    
+    /* 表單單元 */
+    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+    label { font-size: 20px; margin-bottom: 5px; font-weight: bold; }
+    input { font-size: 20px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; outline: none; }
+    input:focus { border-color: var(--primary-color); }
+    
+    /* 按鈕樣式 */
+    .btn { font-size: 20px; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: opacity 0.2s; }
+    .btn:opacity { opacity: 0.9; }
+    .btn-secondary { background-color: #7f8c8d; margin-top: 10px; }
+    
+    /* 切換區塊 */
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+    
+    /* 身分選擇器 */
+    .role-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+    .role-btn { flex: 1; padding: 10px; border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color); font-size: 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .role-btn.active { background: var(--primary-color); color: white; }
+    
+    /* 掃描器 */
+    #reader { width: 100%; background: #000; border-radius: 8px; overflow: hidden; }
+    
+    /* 使用者資訊顯示區 */
+    .info-box { background: #fff0f5; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary-color); margin-bottom: 15px; font-size: 20px; }
+    .info-box div { margin: 5px 0; }
+    
+    /* 金額按鈕網格 (每列4個) */
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
+    .grid-4 button { font-size: 20px; padding: 10px 0; background: #fff; border: 2px solid #f0a3c4; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; }
+    .grid-4 button:active { background: #f0a3c4; color: white; }
+    
+    /* 交易項目網格 (每列3個) */
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+    .grid-3 button { font-size: 20px; padding: 12px 0; background: #f8f9fa; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .grid-3 button.selected { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+    
+    /* 購物車樣式 */
+    .cart-box { background: #f9f9f9; border: 1px dashed #ccc; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 18px; }
+    .cart-item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #eee; }
+    
+    /* 交易成功彈出視窗（滿版固定，防行動端滑動） */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; font-size: 20px; }
+    .modal-title { text-align: center; font-weight: bold; color: #27ae60; font-size: 24px; margin-bottom: 20px; }
+    
+    /* 對齊專用佈局：標籤固定寬度，冒號完美對齊 */
+    .kv-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .kv-row { display: flex; width: 100%; align-items: center; }
+    .kv-label { width: 100px; text-align: left; font-weight: bold; flex-shrink: 0; }
+    .kv-colon { width: 20px; text-align: center; flex-shrink: 0; }
+    .kv-value { flex-grow: 1; text-align: left; word-break: break-all; }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <div class="role-toggle">
-      <button class="role-btn active" id="btn-user" onclick="setRole('user')">一般查詢</button>
-      <button class="role-btn" id="btn-buyer" onclick="setRole('buyer')">代買人運作</button>
-    </div>
-    
-    <div id="buyer-login-box" class="login-inputs hidden">
-      <input type="text" id="buyer-acc" placeholder="請輸入代買人帳號" value="admin">
-      <input type="password" id="buyer-pwd" placeholder="請輸入密碼" value="password123">
-    </div>
-
-    <div id="user-search-box" class="login-inputs">
-      <input type="text" id="search-id" placeholder="手動輸入或掃描 ID (例如: YF001)">
-      <button class="action-btn" onclick="fetchUserData(document.getElementById('search-id').value)">查詢餘額</button>
-    </div>
+<div class="container">
+  <h2>代買系統快速結帳</h2>
+  
+  <div class="role-selector" id="roleSelector">
+    <button class="role-btn active" onclick="switchRole('manager')">代買人登入</button>
+    <button class="role-btn" onclick="switchRole('user')">一般成員查詢</button>
   </div>
 
-  <div class="card">
-    <h3>條碼掃描鏡頭</h3>
+  <div id="view-login" class="view-section active">
+    <div class="form-group">
+      <label for="login-id">帳號 (ID)</label>
+      <input type="text" id="login-id" placeholder="例如: YF001">
+    </div>
+    <div class="form-group" id="pass-group">
+      <label for="login-pass">密碼</label>
+      <input type="password" id="login-pass">
+    </div>
+    <button class="btn" onclick="handleLogin()">進入系統</button>
+  </div>
+
+  <div id="view-main" class="view-section">
+    <h3 id="panel-title">代買交易面板</h3>
+    
+    <div style="margin-bottom: 15px;">
+      <button class="btn" id="scan-btn" onclick="startScanning()">開始掃描成員 QR</button>
+    </div>
     <div id="reader"></div>
-    <button class="action-btn" id="cam-switch-btn" onclick="toggleCamera()">開啟相機連動掃描</button>
-  </div>
-
-  <div id="operation-panel" class="card hidden">
-    <h3>帳戶明細與異動</h3>
-    <div class="info-row"><div class="info-label">【ID】</div><div id="info-id"></div></div>
-    <div class="info-row"><div class="info-label">【姓名】</div><div id="info-name"></div></div>
-    <div class="info-row"><div class="info-label">【餘額】</div><div id="info-balance"></div></div>
-
-    <div id="buyer-action-zone" class="hidden" style="margin-top: 15px; border-top: 2px solid var(--border-color); padding-top: 15px;">
-      <label style="font-weight: bold; display: block; margin-bottom: 5px;">交易金額輸入</label>
-      <input type="number" id="tx-amount" placeholder="請輸入金額 (支援負數)">
-      
-      <div class="grid-4">
-        <button class="amt-btn" onclick="adjustAmount(-1)">-1</button>
-        <button class="amt-btn" onclick="adjustAmount(-5)">-5</button>
-        <button class="amt-btn" onclick="adjustAmount(-10)">-10</button>
-        <button class="amt-btn" onclick="adjustAmount(-50)">-50</button>
-      </div>
-      <div class="grid-4" style="margin-top: 5px;">
-        <button class="amt-btn" onclick="adjustAmount(1)">1</button>
-        <button class="amt-btn" onclick="adjustAmount(5)">5</button>
-        <button class="amt-btn" onclick="adjustAmount(10)">10</button>
-        <button class="amt-btn" onclick="adjustAmount(50)">50</button>
-      </div>
-
-      <label style="font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px;">交易項目選擇</label>
-      <div class="grid-3" id="items-container"></div>
-
-      <button class="action-btn" style="background-color: #222; margin-top: 20px;" onclick="submitTransaction()">執行確認交易</button>
-    </div>
-  </div>
-
-  <!-- 交易成功彈出視窗 -->
-  <div id="success-modal" class="modal-overlay hidden">
-    <div class="modal-content">
-      <div class="modal-title">交易成功</div>
-      <div class="modal-body">
-        <div class="modal-label">【ID】</div><div class="modal-val" id="res-id"></div>
-        <div class="modal-label">【姓名】</div><div class="modal-val" id="res-name"></div>
-        <div class="modal-label">【交易項目】</div><div class="modal-val" id="res-item"></div>
-        <div class="modal-label">【原金額】</div><div class="modal-val" id="res-old"></div>
-        <div class="modal-label">【變動金額】</div><div class="modal-val" id="res-change"></div>
-        <div class="modal-label">【新餘額】</div><div class="modal-val" id="res-new"></div>
-      </div>
-      <button class="action-btn" onclick="closeModal()">關閉視窗</button>
-    </div>
-  </div>
-
-  <script>
-    // 🌟 一體化優化：動態識別當前的 GAS App 網址，免手動複製貼上網址！
-    const GAS_WEB_APP_URL = window.location.href.split('?')[0].split('#')[0];
     
-    let currentRole = 'user';
-    let html5QrcodeScanner = null;
-    let selectedItemName = "飲料";
-    const txItems = ["飲料", "午餐", "預留1", "預留2", "預留3", "預留4", "預留5", "預留6", "預留7", "預留8", "預留9", "預留10"];
-
-    window.addEventListener('DOMContentLoaded', () => {
-      renderItemButtons();
-    });
-
-    function renderItemButtons() {
-      const container = document.getElementById('items-container');
-      container.innerHTML = '';
-      txItems.forEach((item, index) => {
-        const btn = document.createElement('button');
-        btn.className = `item-btn ${index === 0 ? 'selected' : ''}`;
-        btn.innerText = item;
-        btn.onclick = () => selectItem(btn, item);
-        container.appendChild(btn);
-      });
-    }
-
-    function selectItem(element, itemName) {
-      document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
-      element.classList.add('selected');
-      selectedItemName = itemName;
-    }
-
-    function setRole(role) {
-      currentRole = role;
-      document.getElementById('btn-user').classList.toggle('active', role === 'user');
-      document.getElementById('btn-buyer').classList.toggle('active', role === 'buyer');
-      document.getElementById('buyer-login-box').classList.toggle('hidden', role === 'user');
-      document.getElementById('buyer-action-zone').classList.toggle('hidden', role === 'user');
-    }
-
-    function adjustAmount(val) {
-      const input = document.getElementById('tx-amount');
-      let currentVal = parseInt(input.value) || 0;
-      input.value = currentVal + val;
-    }
-
-    // --- 音效系統 (Web Audio API) ---
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    function playScanBeep() {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.4, audioCtx.currentTime); // 逼聲音量 0.4
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.1);
-    }
-
-    function playSuccessSound() {
-      const t = audioCtx.currentTime;
-      [
-        { freq: 880, start: 0, duration: 0.08 },
-        { freq: 1320, start: 0.1, duration: 0.15 }
-      ].forEach(note => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.frequency.setValueAtTime(note.freq, t + note.start);
-        gain.gain.setValueAtTime(0.3, t + note.start);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(t + note.start);
-        osc.stop(t + note.start + note.duration);
-      });
-    }
-
-    // --- 相機控制 (自動記住權限) ---
-    function toggleCamera() {
-      if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
-        html5QrcodeScanner.stop().then(() => {
-          document.getElementById('cam-switch-btn').innerText = "開啟相機連動掃描";
-        });
-        return;
-      }
-
-      if (!html5QrcodeScanner) {
-        html5QrcodeScanner = new Html5Qrcode("reader");
-      }
-
-      html5QrcodeScanner.start(
-        { facingMode: "environment" }, 
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          const cleanId = decodedText.trim().toUpperCase();
-          if (/^YF\d{3}$/.test(cleanId)) {
-            playScanBeep();
-            document.getElementById('search-id').value = cleanId;
-            fetchUserData(cleanId);
-          }
-        },
-        () => {}
-      ).then(() => {
-        document.getElementById('cam-switch-btn').innerText = "關閉相機鏡頭";
-      }).catch(err => {
-        alert("相機啟動失敗，請核准相機權限！");
-      });
-    }
-
-    // --- 資料通訊傳輸 ---
-    function fetchUserData(id) {
-      if (!id) return alert("請輸入或掃描 ID");
-      const targetUrl = `${GAS_WEB_APP_URL}?action=getUser&id=${encodeURIComponent(id)}`;
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+    
+    <div id="target-user-info" style="display: none;">
+      <div class="info-box">
+        <div><strong>【ID】</strong> <span id="info-id">-</span></div>
+        <div><strong>【姓名】</strong> <span id="info-name">-</span></div>
+        <div><strong>【餘額】</strong> <span id="info-balance">0</span> 元</div>
+      </div>
       
-      fetch(targetUrl)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            document.getElementById('info-id').innerText = data.id;
-            document.getElementById('info-name').innerText = data.name;
-            document.getElementById('info-balance').innerText = data.balance + " 元";
-            document.getElementById('operation-panel').classList.remove('hidden');
-            document.getElementById('tx-amount').value = ''; 
-          } else {
-            alert("查詢失敗: " + data.message);
-          }
-        })
-        .catch(err => alert("網路傳輸異常，請確認 GAS 權限設定"));
+      <div id="manager-action-area">
+        <div class="form-group">
+          <label>交易金額視窗</label>
+          <input type="number" id="tx-amount" value="0" style="text-align: right;">
+        </div>
+        
+        <div class="grid-4">
+          <button onclick="addAmount(-1)">-1</button>
+          <button onclick="addAmount(-5)">-5</button>
+          <button onclick="addAmount(-10)">-10</button>
+          <button onclick="addAmount(-50)">-50</button>
+          <button onclick="addAmount(1)">+1</button>
+          <button onclick="addAmount(5)">+5</button>
+          <button onclick="addAmount(10)">+10</button>
+          <button onclick="addAmount(50)">+50</button>
+        </div>
+        
+        <label>交易項目 (單選)</label>
+        <div class="grid-3" id="item-grid">
+          <button class="item-opt selected" onclick="selectItem(this, '飲料')">飲料</button>
+          <button class="item-opt" onclick="selectItem(this, '午餐')">午餐</button>
+          <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
+          <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
+          <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
+          <button class="item-opt" onclick="selectItem(this, '預留4')">預留4</button>
+        </div>
+        
+        <div class="cart-box">
+          <div style="font-weight: bold; margin-bottom: 5px;">購物車暫存：</div>
+          <div id="cart-list">（無項目）</div>
+        </div>
+        
+        <button class="btn" style="background-color: #27ae60; margin-bottom: 10px;" onclick="addToCart()">加入購物車</button>
+        <button class="btn" id="btn-submit-tx" onclick="submitCartTransaction()">確認提交結帳</button>
+      </div>
+    </div>
+    
+    <button class="btn btn-secondary" onclick="logout()">登出 / 切換帳號</button>
+  </div>
+</div>
+
+<div class="modal" id="success-modal">
+  <div class="modal-content">
+    <div class="modal-title">交易成功</div>
+    
+    <div class="kv-container">
+      <div class="kv-row"><div class="kv-label">ID</div><div class="kv-colon">:</div><div class="kv-value" id="res-id"></div></div>
+      <div class="kv-row"><div class="kv-label">姓名</div><div class="kv-colon">:</div><div class="kv-value" id="res-name"></div></div>
+      <div class="kv-row"><div class="kv-label">交易項目</div><div class="kv-colon">:</div><div class="kv-value" id="res-items"></div></div>
+      <div class="kv-row"><div class="kv-label">原金額</div><div class="kv-colon">:</div><div class="kv-value" id="res-old"></div></div>
+      <div class="kv-row"><div class="kv-label">變動金額</div><div class="kv-colon">:</div><div class="kv-value" id="res-change"></div></div>
+      <div class="kv-row"><div class="kv-label">新餘額</div><div class="kv-colon">:</div><div class="kv-value" id="res-new"></div></div>
+    </div>
+    
+    <button class="btn" onclick="closeModal()">關閉並繼續</button>
+  </div>
+</div>
+
+<script>
+  // 請置換成您的 Google Apps Script 網頁應用程式網址
+  const GAS_WEB_APP_URL = https://script.google.com/macros/s/AKfycbyWhTmqG_g03-4wJlLRT3qrkJt58dYlnO-WIvY6jOFfueRIedRkHQOC_cNg4VI6YuCwww/exec"; 
+
+  let currentRole = 'manager'; 
+  let loggedInUser = null;     
+  let scannedUser = null;      
+  let html5QrcodeScanner = null;
+  let selectedItemName = '飲料';
+  let shoppingCart = [];
+
+  // 音效產生器 (Web Audio API)
+  function playBeep(type) {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime); // 音量固定為 0.4
+      
+      if (type === 'scan') {
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.1); // 短逼聲
+      } else if (type === 'success') {
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.15); // 雙音節成功聲
+        oscillator.stop(audioCtx.currentTime + 0.35);
+      }
+    } catch (e) {
+      console.log("音效撥放失敗:", e);
     }
+  }
 
-    function submitTransaction() {
-      const id = document.getElementById('info-id').innerText;
-      const amountChange = document.getElementById('tx-amount').value;
-      const buyerAccount = document.getElementById('buyer-acc').value;
-      const buyerPassword = document.getElementById('buyer-pwd').value;
+  // 切換角色
+  function switchRole(role) {
+    currentRole = role;
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    const passGroup = document.getElementById('pass-group');
+    if (role === 'user') {
+      passGroup.style.display = 'none';
+    } else {
+      passGroup.style.display = 'flex';
+    }
+  }
 
-      if (!amountChange || isNaN(amountChange)) return alert("請輸入有效的交易金額");
-
-      const payload = {
-        action: "transaction", id: id, amountChange: parseInt(amountChange),
-        itemName: selectedItemName, buyerAccount: buyerAccount, buyerPassword: buyerPassword
-      };
-
-      fetch(GAS_WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
+  // 登入驗證
+  function handleLogin() {
+    const id = document.getElementById('login-id').value.trim().toUpperCase();
+    const pass = document.getElementById('login-pass').value.trim();
+    
+    if(!id) { alert("請輸入ID"); return; }
+    if(currentRole === 'manager' && !pass) { alert("請輸入密碼"); return; }
+    
+    // 呼叫 GAS 後端
+    fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "loginAndFetch",
+        id: id,
+        password: pass,
+        isManager: (currentRole === 'manager')
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          playSuccessSound();
-          
-          // 冒號精準完全對齊輸出 (全 20px)
-          document.getElementById('res-id').innerText = "：" + data.id;
-          document.getElementById('res-name').innerText = "：" + data.name;
-          document.getElementById('res-item').innerText = "：" + data.itemName;
-          document.getElementById('res-old').innerText = "：" + data.oldBalance + " 元";
-          document.getElementById('res-change').innerText = "：" + (data.amountChange >= 0 ? "+" : "") + data.amountChange + " 元";
-          document.getElementById('res-new').innerText = "：" + data.newBalance + " 元";
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        loggedInUser = data;
+        showMainPanel();
+      } else {
+        alert("錯誤: " + data.message);
+      }
+    })
+    .catch(err => alert("網路連線失敗"));
+  }
 
-          document.getElementById('success-modal').classList.remove('hidden');
-        } else {
-          alert("交易失敗: " + data.message);
-        }
+  // 顯示操作面板
+  function showMainPanel() {
+    document.getElementById('view-login').classList.remove('active');
+    document.getElementById('view-main').classList.add('active');
+    document.getElementById('roleSelector').style.display = 'none';
+    
+    if (currentRole === 'user') {
+      document.getElementById('panel-title').innerText = "個人餘額查詢";
+      document.getElementById('scan-btn').style.display = 'none'; // 個人免掃描
+      document.getElementById('manager-action-area').style.display = 'none';
+      
+      // 直接顯示自己的數據
+      scannedUser = loggedInUser;
+      showTargetUserInfo();
+    } else {
+      document.getElementById('panel-title').innerText = "代買工作台 (" + loggedInUser.name + ")";
+      document.getElementById('scan-btn').style.display = 'block';
+      document.getElementById('target-user-info').style.display = 'none';
+    }
+  }
+
+  // 啟動相機掃描
+  function startScanning() {
+    if (html5QrcodeScanner) {
+      html5QrcodeScanner.clear();
+    }
+    
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    html5QrcodeScanner.start(
+      { facingMode: "environment" }, 
+      { fps: 10, qrbox: 250 },
+      (qrCodeMessage) => {
+        // 掃描成功
+        playBeep('scan');
+        html5QrcodeScanner.stop(); 
+        fetchTargetUser(qrCodeMessage.trim().toUpperCase());
+      },
+      (errorMessage) => { // 掃描中不跳錯誤 }
+    ).catch(err => {
+      alert("無法啟動相機，請確認權限設定。");
+    });
+  }
+
+  // 讀取被代買人資訊
+  function fetchTargetUser(targetId) {
+    fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "loginAndFetch", id: targetId, password: "", isManager: false })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        scannedUser = data;
+        shoppingCart = []; // 更換人員時清空購物車
+        updateCartUI();
+        showTargetUserInfo();
+      } else {
+        alert("掃描失敗: " + data.message);
+      }
+    });
+  }
+
+  // 顯示被代買人名片
+  function showTargetUserInfo() {
+    document.getElementById('target-user-info').style.display = 'block';
+    document.getElementById('info-id').innerText = scannedUser.id;
+    document.getElementById('info-name').innerText = scannedUser.name;
+    document.getElementById('info-balance').innerText = scannedUser.balance;
+    document.getElementById('tx-amount').value = 0;
+  }
+
+  // 快捷金額計算
+  function addAmount(val) {
+    let input = document.getElementById('tx-amount');
+    input.value = Number(input.value) + val;
+  }
+
+  // 切換項目選擇
+  function selectItem(element, name) {
+    document.querySelectorAll('.item-opt').forEach(b => b.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedItemName = name;
+  }
+
+  // 加入購物車功能
+  function addToCart() {
+    let amt = Number(document.getElementById('tx-amount').value);
+    if(amt === 0) { alert("金額不能為0"); return; }
+    
+    shoppingCart.push({
+      name: selectedItemName,
+      amount: amt
+    });
+    
+    updateCartUI();
+    document.getElementById('tx-amount').value = 0; // 重置金額
+  }
+
+  // 更新購物車顯示介面
+  function updateCartUI() {
+    const listDiv = document.getElementById('cart-list');
+    if (shoppingCart.length === 0) {
+      listDiv.innerHTML = "（無項目）";
+      return;
+    }
+    let html = "";
+    shoppingCart.forEach((item, index) => {
+      html += `<div class="cart-item"><span>${item.name}</span><span>${item.amount > 0 ? '+' : ''}${item.amount} 元</span></div>`;
+    });
+    listDiv.innerHTML = html;
+  }
+
+  // 提交購物車交易到 GAS 後端
+  function submitCartTransaction() {
+    if(shoppingCart.length === 0) { alert("購物車目前沒有項目，請先加入項目。"); return; }
+    
+    document.getElementById('btn-submit-tx').disabled = true;
+    document.getElementById('btn-submit-tx').innerText = "交易處理中...";
+
+    fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "submitTransaction",
+        managerId: loggedInUser.id,
+        userId: scannedUser.id,
+        cartItems: shoppingCart
       })
-      .catch(err => alert("處理交易時發生網路錯誤"));
-    }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        playBeep('success');
+        showSuccessModal(data);
+      } else {
+        alert("交易失敗: " + data.message);
+      }
+    })
+    .finally(() => {
+      document.getElementById('btn-submit-tx').disabled = false;
+      document.getElementById('btn-submit-tx').innerText = "確認提交結帳";
+    });
+  }
 
-    function closeModal() {
-      document.getElementById('success-modal').classList.add('hidden');
-      const currentId = document.getElementById('info-id').innerText;
-      if (currentId) fetchUserData(currentId);
-    }
-  </script>
+  // 顯示完全對齊的 20px 結果彈出視窗
+  function showSuccessModal(data) {
+    document.getElementById('res-id').innerText = data.id;
+    document.getElementById('res-name').innerText = data.name;
+    document.getElementById('res-items').innerText = data.itemsText;
+    document.getElementById('res-old').innerText = data.startBalance + " 元";
+    document.getElementById('res-change').innerText = (data.totalChange > 0 ? "+" : "") + data.totalChange + " 元";
+    document.getElementById('res-new').innerText = data.endBalance + " 元";
+    
+    document.getElementById('success-modal').classList.add('active');
+  }
 
-  <!-- 內嵌極簡 Service Worker 註冊碼以利 PWA 快取 -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      const swCode = `
-        self.addEventListener('install', e => self.skipWaiting());
-        self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-      `;
-      const blob = new Blob([swCode], { type: 'application/javascript' });
-      navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
-    }
-  </script>
+  function closeModal() {
+    document.getElementById('success-modal').classList.remove('active');
+    shoppingCart = [];
+    updateCartUI();
+    // 重新刷新目前畫面的餘額顯示，準備下一次操作
+    fetchTargetUser(scannedUser.id);
+  }
+
+  function logout() {
+    loggedInUser = null;
+    scannedUser = null;
+    shoppingCart = [];
+    if(html5QrcodeScanner) { try { html5QrcodeScanner.stop(); } catch(e){} }
+    document.getElementById('view-main').classList.remove('active');
+    document.getElementById('view-login').classList.add('active');
+    document.getElementById('roleSelector').style.display = 'flex';
+    document.getElementById('login-id').value = "";
+    document.getElementById('login-pass').value = "";
+  }
+</script>
 </body>
 </html>
