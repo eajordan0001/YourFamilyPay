@@ -55,10 +55,10 @@
     .info-box { background: #fff0f5; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary-color); margin-bottom: 15px; font-size: 20px; }
     .info-box div { margin: 5px 0; }
     
-    /* 金額按鈕網格 (每列4個) */
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
-    .grid-4 button { font-size: 20px; padding: 10px 0; background: #fff; border: 2px solid #f0a3c4; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; }
-    .grid-4 button:active { background: #f0a3c4; color: white; }
+    /* 金額按鈕網格 (優化：每列改為5個，以容納-500與+500) */
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
+    .grid-5 button { font-size: 18px; padding: 10px 0; background: #fff; border: 2px solid #f0a3c4; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; }
+    .grid-5 button:active { background: #f0a3c4; color: white; }
     
     /* 交易項目網格 (每列3個) */
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
@@ -128,15 +128,18 @@
           <input type="number" id="tx-amount" placeholder="0" style="text-align: right;">
         </div>
         
-        <div class="grid-4">
+        <div class="grid-5">
           <button onclick="addAmount(-1)">-1</button>
           <button onclick="addAmount(-5)">-5</button>
           <button onclick="addAmount(-10)">-10</button>
           <button onclick="addAmount(-50)">-50</button>
+          <button onclick="addAmount(-500)">-500</button>
+          
           <button onclick="addAmount(1)">+1</button>
           <button onclick="addAmount(5)">+5</button>
           <button onclick="addAmount(10)">+10</button>
           <button onclick="addAmount(50)">+50</button>
+          <button onclick="addAmount(500)">+500</button>
         </div>
         
         <label>交易項目 (單選)</label>
@@ -146,7 +149,7 @@
           <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
-          <button class="item-opt" onclick="selectItem(this, '預留4')">預留4</button>
+          <button class="item-opt" onclick="selectItem(this, '預留4')">儲值金</button>
         </div>
         
         <div class="cart-box">
@@ -427,12 +430,22 @@
     document.getElementById('success-modal').classList.add('active');
   }
 
+  // 修正：點擊關閉視窗後，重置介面並自動重啟相機掃描
   function closeModal() {
     document.getElementById('success-modal').classList.remove('active');
     shoppingCart = [];
     updateCartUI();
-    document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
-    document.getElementById('tx-amount').value = ""; 
+    
+    // 如果是代買人操作，結帳完直接初始化並重新開啟掃描器
+    if (currentRole === 'manager') {
+      document.getElementById('target-user-info').style.display = 'none'; // 隱藏上一個人的資料
+      scannedUser = null;
+      startScanning(); // 直接自動啟動下一次掃描！
+    } else {
+      // 一般成員端則只更新餘額
+      document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
+      document.getElementById('tx-amount').value = ""; 
+    }
   }
 
   function logout() {
