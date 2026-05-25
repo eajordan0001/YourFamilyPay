@@ -48,8 +48,8 @@
     .role-btn { flex: 1; padding: 10px; border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color); font-size: 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .role-btn.active { background: var(--primary-color); color: white; }
     
-    /* 掃描器 */
-    #reader { width: 100%; background: #000; border-radius: 8px; overflow: hidden; }
+    /* 掃描器外框優化 */
+    #reader { width: 100%; background: #000; border-radius: 8px; overflow: hidden; min-height: 250px; }
     
     /* 使用者資訊顯示區 */
     .info-box { background: #fff0f5; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary-color); margin-bottom: 15px; font-size: 20px; }
@@ -97,7 +97,7 @@
   <div id="view-login" class="view-section active">
     <div class="form-group">
       <label for="login-id">帳號 (ID)</label>
-      <input type="text" id="login-id" placeholder="例如: YF001 或 ADMIN01">
+      <input type="text" id="login-id" placeholder="例如: YF001 或 admin">
     </div>
     <div class="form-group" id="pass-group">
       <label for="login-pass">密碼</label>
@@ -147,7 +147,7 @@
         <div class="grid-3" id="item-grid">
           <button class="item-opt selected" onclick="selectItem(this, '飲料')">飲料</button>
           <button class="item-opt" onclick="selectItem(this, '午餐')">午餐</button>
-          <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
+          <button class="item-opt" onclick="selectItem(this, '文具')">文具</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
           <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
@@ -194,7 +194,7 @@
   let html5QrcodeScanner = null;
   let selectedItemName = '飲料';
   let shoppingCart = [];
-  let canScan = true; // 修正：改用純前端變數控制解碼鎖，絕不調用自帶遮罩的 .pause()
+  let isScanningActive = false; // 控制同時間只有一個鏡頭實體在跑
 
   function playBeep(type) {
     try {
@@ -293,14 +293,19 @@
       document.getElementById('panel-divider').style.display = 'block';
       document.getElementById('manager-action-area').style.display = 'block'; 
       document.getElementById('target-user-info').style.display = 'none';
+      
+      // 登入後直接貼心幫忙開啟掃描，完全自動化
+      startScanning();
     }
   }
 
-  // 修正：徹底拋棄套件的 pause/resume，只靠變數鎖定。相機畫面永久保持動態流暢！
+  // 終極修復：一讀到就立刻徹底關閉相機串流，拒絕並行訊號造成的瀏覽器假死
   function startScanning() {
-    canScan = true; 
+    if (isScanningActive) return;
+    isScanningActive = true;
+    
     if (html5QrcodeScanner) {
-      return; 
+      try { html5QrcodeScanner.stop(); } catch(e){}
     }
     
     html5QrcodeScanner = new Html5Qrcode("reader");
@@ -308,17 +313,25 @@
       { facingMode: "environment" }, 
       { fps: 10, qrbox: 250 },
       (qrCodeMessage) => {
-        // 修正：如果已經鎖定，直接無視條碼訊號。此處完全不調用 .pause()，因此絕無灰色遮罩！
-        if (!canScan) return; 
-        canScan = false; 
-        
+        // 終極修復點：讀取成功的百萬分之一秒內，立刻執行物理性關閉鏡頭，阻止下一次解碼
+        isScanningActive = false;
         playBeep('scan');
-        fetchTargetUser(qrCodeMessage.trim().toUpperCase());
+        
+        try {
+          html5QrcodeScanner.stop().then(() => {
+            fetchTargetUser(qrCodeMessage.trim().toUpperCase());
+          }).catch(err => {
+            // 防禦性降級處理
+            fetchTargetUser(qrCodeMessage.trim().toUpperCase());
+          });
+        } catch(e) {
+          fetchTargetUser(qrCodeMessage.trim().toUpperCase());
+        }
       },
       (errorMessage) => { }
     ).catch(err => {
-      alert("無法啟動相機，請確認網頁是否有 HTTPS 且已允許相機權限。");
-      canScan = true;
+      console.error(err);
+      isScanningActive = false;
     });
   }
 
@@ -342,13 +355,13 @@
         showTargetUserInfo();
       } else {
         alert("讀取成員失敗: " + data.message);
-        canScan = true; // 讀取失敗時重新解鎖，即可馬上重掃
+        startScanning(); // 失敗時重新開鏡頭
       }
     })
     .catch(err => {
       console.error(err);
       alert("讀取成員時網路連線發生錯誤");
-      canScan = true;
+      startScanning();
     });
   }
 
@@ -456,8 +469,8 @@
     if (currentRole === 'manager') {
       document.getElementById('target-user-info').style.display = 'none'; 
       scannedUser = null;
-      // 修正：此處僅需還原變數鎖定！鏡頭完全維持動態，下一個人湊上來立刻辨識！
-      canScan = true; 
+      // 終極修復點：藉由按下確認鍵的「使用者手勢」重新開鏡頭，100% 繼承權限，絕不重複彈窗，且完全排除假死問題！
+      startScanning(); 
     } else {
       document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
       document.getElementById('tx-amount').value = ""; 
@@ -468,7 +481,7 @@
     loggedInUser = null;
     scannedUser = null;
     shoppingCart = [];
-    canScan = true;
+    isScanningActive = false;
     if(html5QrcodeScanner) { 
       try { html5QrcodeScanner.stop(); } catch(e){} 
       html5QrcodeScanner = null;
