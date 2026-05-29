@@ -10,7 +10,7 @@
   <link class="pwa-icon" rel="apple-touch-icon" sizes="192x192" href="icon192.png">
   <link class="pwa-icon" rel="apple-touch-icon" sizes="512x512" href="icon512.png">
   
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22代買系統%22,%22short_name%22:%22代買%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23e8006e%22,%22icons%22:[{%22src%22:%22icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22%e5%b0%8f%e5%a4%a9%e4%bd%bf%e4%bb%a3%e8%b2%b7%e7%b3%bb%e7%b5%b1%22,%22short_name%22:%22%e5%b0%8f%e5%a4%a9%e4%bd%bf%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23e8006e%22,%22icons%22:[{%22src%22:%22icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
   
   <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -187,7 +187,6 @@
 </div>
 
 <script>
-  // 已自動嵌入您的 Google Apps Script 網頁應用程式網址
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWhTmqG_g03-4wJlLRT3qrkJt58dYlnO-WIvY6jOFfueRIedRkHQOC_cNg4VI6YuCwww/exec"; 
 
   let currentRole = 'manager'; 
@@ -196,7 +195,7 @@
   let html5QrcodeScanner = null;
   let selectedItemName = '飲料';
   let shoppingCart = [];
-  let canScan = true; // 關鍵解碼防禦鎖：用最頂層邏輯直接切斷硬件多重回傳，免關相機
+  let canScan = true; 
 
   function playBeep(type) {
     try {
@@ -300,16 +299,14 @@
     }
   }
 
-  // 權限優化方案：相機實體只建立一次，後續絕不呼叫 .stop()，完美鎖定權限
   function startScanning() {
-    canScan = true; // 開啟解碼接收鎖
+    canScan = true; 
     
-    // 確保重新開啟時，隱藏的相機區塊再度顯現
     document.getElementById('scanner-section').style.display = 'block';
     document.getElementById('panel-divider').style.display = 'block';
     
     if (html5QrcodeScanner) {
-      return; // 如果相機早就在背景開啟了，直接還原變數與 UI 即可，100% 不會跳出權限確認！
+      return; 
     }
     
     html5QrcodeScanner = new Html5Qrcode("reader");
@@ -317,7 +314,6 @@
       { facingMode: "environment" }, 
       { fps: 10, qrbox: 250 },
       (qrCodeMessage) => {
-        // 核心防禦：如果解碼鎖已關閉，在百萬分之一秒內直接攔截，不跑任何邏輯、不逼聲、不卡死
         if (!canScan) return; 
         canScan = false; 
         
@@ -362,7 +358,6 @@
   }
 
   function showTargetUserInfo() {
-    // 頁面長度優化：成功載入成員資訊後，直接將相機區塊 display: none 隱藏，但「完全不關閉相機串流」！
     if (currentRole === 'manager') {
       document.getElementById('scanner-section').style.display = 'none';
       document.getElementById('panel-divider').style.display = 'none';
@@ -471,7 +466,6 @@
     if (currentRole === 'manager') {
       document.getElementById('target-user-info').style.display = 'none'; 
       scannedUser = null;
-      // 點擊關閉並繼續時，一鍵重啟解碼鎖與顯現 UI，零時差直接刷下一個人，完全不彈權限確認視窗！
       startScanning(); 
     } else {
       document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
