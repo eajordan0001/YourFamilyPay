@@ -48,6 +48,11 @@
     .role-btn { flex: 1; padding: 10px; border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color); font-size: 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .role-btn.active { background: var(--primary-color); color: white; }
     
+    /* 檢視模式切換按鈕 (列表 vs 月曆) */
+    .mode-selector { display: flex; gap: 8px; margin: 10px 0 15px 0; }
+    .mode-btn { flex: 1; padding: 8px; font-size: 18px; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; }
+    .mode-btn.active { background: #34495e; color: white; border-color: #34495e; font-weight: bold; }
+
     /* 掃描器外框 */
     #reader { width: 100%; background: #000; border-radius: 8px; overflow: hidden; min-height: 250px; }
     
@@ -65,7 +70,7 @@
     .grid-3 button { font-size: 20px; padding: 12px 0; background: #f8f9fa; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .grid-3 button.selected { background: var(--primary-color); color: white; border-color: var(--primary-color); }
     
-    /* 購物車與歷史紀錄外框（限高、防左右溢出、可垂直捲動） */
+    /* 購物車與歷史紀錄外框 */
     .cart-box, .history-box { background: #f9f9f9; border: 1px dashed #ccc; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 18px; }
     .history-box { max-height: 250px; overflow-y: auto; overflow-x: hidden; border: 1px solid #ddd; background: #ffffff; }
     
@@ -77,6 +82,22 @@
     .hist-time { font-size: 13px; color: #7f8c8d; }
     .hist-item-name { font-size: 17px; color: #2c3e50; margin-top: 2px; }
     .hist-right-amt { font-size: 18px; font-weight: bold; text-align: right; width: 25%; }
+    
+    /* ================== 月曆 UI 樣式專區 ================== */
+    .calendar-container { background: #ffffff; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 15px; }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .calendar-header button { background: none; border: 1px solid #ccc; padding: 5px 12px; font-size: 16px; border-radius: 4px; cursor: pointer; }
+    .calendar-header button:active { background: #eee; }
+    .calendar-title { font-size: 18px; font-weight: bold; color: var(--text-color); }
+    
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 14px; }
+    .cal-weekday { font-weight: bold; background: #f1f2f6; padding: 6px 0; border-bottom: 1px solid #ddd; color: #57606f; }
+    .cal-cell { min-height: 48px; border-bottom: 1px solid #f1f2f6; border-right: 1px solid #f1f2f6; padding: 4px 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; position: relative; cursor: pointer; }
+    .cal-cell:nth-child(7n) { border-right: none; }
+    .cal-cell.empty { cursor: default; background: #fafafa; }
+    .cal-cell.selected { background: #fff2f7; border: 1px solid var(--primary-color); border-radius: 4px; }
+    .cal-date-num { font-size: 14px; color: #2c3e50; }
+    .cal-badge { display: inline-block; background-color: var(--primary-color); color: white; font-size: 11px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; text-align: center; line-height: 18px; margin-top: 3px; }
     
     /* 交易成功彈出視窗 */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
@@ -133,9 +154,31 @@
       </div>
       
       <div id="user-history-area" style="display: none;">
-        <label>半年內交易紀錄 (最新50筆)</label>
-        <div class="history-box" id="history-list">
-          （無交易紀錄）
+        <label>交易紀錄檢視模式</label>
+        <div class="mode-selector">
+          <button class="mode-btn active" id="btn-mode-list" onclick="changeHistoryMode('list')">📋 列表流水帳</button>
+          <button class="mode-btn" id="btn-mode-cal" onclick="changeHistoryMode('cal')">📅 月曆對帳表</button>
+        </div>
+
+        <div id="history-list-wrapper">
+          <div class="history-box" id="history-list">（無交易紀錄）</div>
+        </div>
+
+        <div id="history-cal-wrapper" style="display: none;">
+          <div class="calendar-container">
+            <div class="calendar-header">
+              <button onclick="navigateMonth(-1)">◀ 上個月</button>
+              <div class="calendar-title" id="cal-month-title">2026 年 06 月</div>
+              <button onclick="navigateMonth(1)">下個月 ▶</button>
+            </div>
+            <div class="calendar-grid">
+              <div class="cal-weekday">日</div><div class="cal-weekday">一</div><div class="cal-weekday">二</div>
+              <div class="cal-weekday">三</div><div class="cal-weekday">四</div><div class="cal-weekday">五</div><div class="cal-weekday">六</div>
+            </div>
+            <div class="calendar-grid" id="calendar-days-box"></div>
+          </div>
+          <label id="cal-selected-date-label" style="font-size:16px; color:#57606f; margin-bottom:5px; display:block;">請點擊上方含數字的日期查看明細：</label>
+          <div class="history-box" id="cal-day-details" style="max-height:150px;">（無選取日期）</div>
         </div>
       </div>
       
@@ -210,6 +253,11 @@
   let shoppingCart = [];
   let canScan = true; 
 
+  // 月曆專屬狀態變數
+  let currentDisplayYear = 2026;
+  let currentDisplayMonth = 5; // 0代表1月，5代表6月（配合JavaScript Date邏輯）
+  let currentHistoryMode = 'list';
+
   function playBeep(type) {
     try {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -269,6 +317,12 @@
     .then(data => {
       if(data.success) {
         loggedInUser = data;
+        
+        // 登入成功時，自動將月曆預設初始化為目前當下的年月
+        let today = new Date();
+        currentDisplayYear = today.getFullYear();
+        currentDisplayMonth = today.getMonth();
+        
         showMainPanel();
       } else {
         alert("錯誤: " + data.message);
@@ -378,9 +432,29 @@
     
     if (currentRole === 'user') {
       renderHistoryUI(scannedUser.history);
+      renderCalendarUI(); // 渲染月曆
     }
   }
 
+  // 模式切換：列表模式 與 月曆模式
+  function changeHistoryMode(mode) {
+    currentHistoryMode = mode;
+    document.getElementById('btn-mode-list').classList.remove('active');
+    document.getElementById('btn-mode-cal').classList.remove('active');
+    document.getElementById('history-list-wrapper').style.display = 'none';
+    document.getElementById('history-cal-wrapper').style.display = 'none';
+
+    if(mode === 'list') {
+      document.getElementById('btn-mode-list').classList.add('active');
+      document.getElementById('history-list-wrapper').style.display = 'block';
+    } else {
+      document.getElementById('btn-mode-cal').classList.add('active');
+      document.getElementById('history-cal-wrapper').style.display = 'block';
+      renderCalendarUI(); // 切換時重新繪製月曆
+    }
+  }
+
+  // 渲染模式一：傳統流水帳清單
   function renderHistoryUI(historyArray) {
     const histDiv = document.getElementById('history-list');
     if (!historyArray || historyArray.length === 0) {
@@ -405,6 +479,128 @@
     });
     histDiv.innerHTML = html;
   }
+
+  // ================== 月曆核心代碼 ==================
+  function navigateMonth(direction) {
+    currentDisplayMonth += direction;
+    if (currentDisplayMonth > 11) {
+      currentDisplayMonth = 0;
+      currentDisplayYear++;
+    } else if (currentDisplayMonth < 0) {
+      currentDisplayMonth = 11;
+      currentDisplayYear--;
+    }
+    renderCalendarUI();
+  }
+
+  function renderCalendarUI() {
+    // 1. 設定月曆頂端標題文字
+    const displayMonthStr = String(currentDisplayMonth + 1).padStart(2, '0');
+    document.getElementById('cal-month-title').innerText = `${currentDisplayYear} 年 ${displayMonthStr} 月`;
+    
+    const daysBox = document.getElementById('calendar-days-box');
+    daysBox.innerHTML = ""; // 清空舊格子
+    
+    // 清空下方的單日詳細視窗
+    document.getElementById('cal-selected-date-label').innerText = "請點擊上方含數字的日期查看明細：";
+    document.getElementById('cal-day-details').innerHTML = "（無選取日期）";
+
+    // 2. 預先依據當前選取的「年/月/日」將帳單資料包裝成方便查閱的字典物聯
+    // 格式：{"2026/06/01": [logObj1, logObj2...]}
+    let txDictionary = {};
+    if (scannedUser && scannedUser.history) {
+      scannedUser.history.forEach(log => {
+        // log.date 的格式為 "2026/06/01 15:30" -> 切割出日期部分
+        let datePart = log.date.split(" ")[0]; 
+        if (!txDictionary[datePart]) {
+          txDictionary[datePart] = [];
+        }
+        txDictionary[datePart].push(log);
+      });
+    }
+
+    // 3. 計算月曆日期網格基礎數值
+    let firstDayOfWeek = new Date(currentDisplayYear, currentDisplayMonth, 1).getDay(); // 第一天是星期幾
+    let totalDaysInMonth = new Date(currentDisplayYear, currentDisplayMonth + 1, 0).getDate(); // 這個月總共有幾天
+
+    // 4. 產生上個月的空白墊底格子
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      let emptyCell = document.createElement('div');
+      emptyCell.className = "cal-cell empty";
+      daysBox.appendChild(emptyCell);
+    }
+
+    // 5. 開始依序印出 1 號到當月最後一天的日期格子
+    for (let day = 1; day <= totalDaysInMonth; day++) {
+      let currentDayStr = String(day).padStart(2, '0');
+      let fullKeyPath = `${currentDisplayYear}/${displayMonthStr}/${currentDayStr}`;
+      
+      let cell = document.createElement('div');
+      cell.className = "cal-cell";
+      
+      // 置入日期文字
+      let dateNumSpan = document.createElement('span');
+      dateNumSpan.className = "cal-date-num";
+      dateNumSpan.innerText = day;
+      cell.appendChild(dateNumSpan);
+      
+      // 檢查此日期當天是否有任何交易明細
+      if (txDictionary[fullKeyPath] && txDictionary[fullKeyPath].length > 0) {
+        let count = txDictionary[fullKeyPath].length;
+        
+        // 建立當日交易筆數小貼紙 (Badge)
+        let badge = document.createElement('span');
+        badge.className = "cal-badge";
+        badge.innerText = count;
+        cell.appendChild(badge);
+        
+        // 綁定點擊事件：手點格子時，下方顯示明細流水帳
+        cell.onclick = function() {
+          // 移除所有格子的選取外框特效，並在目前點擊的格子加上特效
+          document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
+          cell.classList.add('selected');
+          
+          showDayDetailsUI(fullKeyPath, txDictionary[fullKeyPath]);
+        };
+      } else {
+        // 沒有交易的格子，點擊時僅提示無交易
+        cell.onclick = function() {
+          document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
+          cell.classList.add('selected');
+          document.getElementById('cal-selected-date-label').innerText = `${fullKeyPath} 的交易明細：`;
+          document.getElementById('cal-day-details').innerHTML = "<div style='text-align:center; padding:15px; color:#7f8c8d;'>當日無任何交易紀錄</div>";
+        };
+      }
+      
+      daysBox.appendChild(cell);
+    }
+  }
+
+  // 點擊月曆格子後，在下方展示當天獨立明細清單的區塊
+  function showDayDetailsUI(dateLabel, dayLogs) {
+    document.getElementById('cal-selected-date-label').innerText = `${dateLabel} 的交易明細 (${dayLogs.length}筆)：`;
+    
+    const detailsDiv = document.getElementById('cal-day-details');
+    let html = "";
+    
+    dayLogs.forEach(log => {
+      let color = log.change >= 0 ? "#27ae60" : "#e74c3c";
+      let prefix = log.change >= 0 ? "+" : "";
+      let timePart = log.date.split(" ")[1]; // 只抓取時分 "15:30"
+      
+      html += `<div class="history-item">
+                <div class="hist-left">
+                  <span class="hist-time">時間: ${timePart}</span>
+                  <span class="hist-item-name">項目: ${log.item}</span>
+                </div>
+                <div class="hist-right-amt" style="color: ${color}; font-size:16px;">
+                  ${prefix}${log.change} 元
+                </div>
+              </div>`;
+    });
+    detailsDiv.innerHTML = html;
+  }
+  // ================== 月曆核心代碼結束 ==================
 
   function addAmount(val) {
     let input = document.getElementById('tx-amount');
@@ -510,6 +706,7 @@
     scannedUser = null;
     shoppingCart = [];
     canScan = true;
+    currentHistoryMode = 'list';
     if(html5QrcodeScanner) { 
       try { html5QrcodeScanner.stop(); } catch(e){} 
       html5QrcodeScanner = null;
@@ -519,6 +716,10 @@
     document.getElementById('roleSelector').style.display = 'flex';
     document.getElementById('login-id').value = "";
     document.getElementById('login-pass').value = "";
+    document.getElementById('btn-mode-list').classList.add('active');
+    document.getElementById('btn-mode-cal').classList.remove('active');
+    document.getElementById('history-list-wrapper').style.display = 'block';
+    document.getElementById('history-cal-wrapper').style.display = 'none';
   }
 </script>
 </body>
