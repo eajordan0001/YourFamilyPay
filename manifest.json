@@ -1,0 +1,20 @@
+{
+  "name": "小天使代買系統",
+  "short_name": "小天使代買",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#e3f2fd",
+  "theme_color": "#2196F3",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
