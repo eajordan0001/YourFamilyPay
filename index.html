@@ -72,7 +72,7 @@
     .cart-item, .history-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; width: 100%; }
     .cart-del-btn { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; font-weight: bold; padding: 2px 8px; }
     
-    /* 歷史紀錄文字排版細節：左邊時間項目，右邊金額 */
+    /* 歷史紀錄文字排版細節 */
     .hist-left { display: flex; flex-direction: column; text-align: left; max-width: 75%; }
     .hist-time { font-size: 13px; color: #7f8c8d; }
     .hist-item-name { font-size: 17px; color: #2c3e50; margin-top: 2px; }
@@ -104,7 +104,7 @@
   <div id="view-login" class="view-section active">
     <div class="form-group">
       <label for="login-id">帳號 (ID)</label>
-      <input type="text" id="login-id" placeholder="例如: YF001 或 ADMIN01">
+      <input type="text" id="login-id" placeholder="例如: admin 或 YF001">
     </div>
     <div class="form-group" id="pass-group">
       <label for="login-pass">密碼</label>
@@ -294,7 +294,7 @@
       document.getElementById('scanner-section').style.display = 'none'; 
       document.getElementById('panel-divider').style.display = 'none';
       document.getElementById('manager-action-area').style.display = 'none'; 
-      document.getElementById('user-history-area').style.display = 'block'; // 打開歷史紀錄區
+      document.getElementById('user-history-area').style.display = 'block'; 
       
       scannedUser = loggedInUser;
       showTargetUserInfo();
@@ -303,7 +303,7 @@
       document.getElementById('scanner-section').style.display = 'block';
       document.getElementById('panel-divider').style.display = 'block';
       document.getElementById('manager-action-area').style.display = 'block'; 
-      document.getElementById('user-history-area').style.display = 'none'; // 代買不需要看個人歷史
+      document.getElementById('user-history-area').style.display = 'none'; 
       document.getElementById('target-user-info').style.display = 'none';
       
       startScanning();
@@ -376,13 +376,11 @@
     document.getElementById('info-balance').innerText = scannedUser.balance;
     document.getElementById('tx-amount').value = ""; 
     
-    // 渲染歷史交易紀錄（一般成員自查專用）
     if (currentRole === 'user') {
       renderHistoryUI(scannedUser.history);
     }
   }
 
-  // 核心渲染：支援手持端排版與括號內固定四字寬
   function renderHistoryUI(historyArray) {
     const histDiv = document.getElementById('history-list');
     if (!historyArray || historyArray.length === 0) {
@@ -392,7 +390,6 @@
     
     let html = "";
     historyArray.forEach(log => {
-      // 判斷金額顏色：正數綠色，負數紅色
       let color = log.change >= 0 ? "#27ae60" : "#e74c3c";
       let prefix = log.change >= 0 ? "+" : "";
       
