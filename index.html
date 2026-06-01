@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>代買快速結帳系統</title>
+  <title>小天使代買系統</title>
   
   <meta name="theme-color" content="#e8006e">
   
@@ -48,7 +48,7 @@
     .role-btn { flex: 1; padding: 10px; border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color); font-size: 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .role-btn.active { background: var(--primary-color); color: white; }
     
-    /* 掃描器外框優化 */
+    /* 掃描器外框 */
     #reader { width: 100%; background: #000; border-radius: 8px; overflow: hidden; min-height: 250px; }
     
     /* 使用者資訊顯示區 */
@@ -65,10 +65,18 @@
     .grid-3 button { font-size: 20px; padding: 12px 0; background: #f8f9fa; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .grid-3 button.selected { background: var(--primary-color); color: white; border-color: var(--primary-color); }
     
-    /* 購物車樣式 */
-    .cart-box { background: #f9f9f9; border: 1px dashed #ccc; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 18px; }
-    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #eee; }
+    /* 購物車與歷史紀錄外框（限高、防左右溢出、可垂直捲動） */
+    .cart-box, .history-box { background: #f9f9f9; border: 1px dashed #ccc; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 18px; }
+    .history-box { max-height: 250px; overflow-y: auto; overflow-x: hidden; border: 1px solid #ddd; background: #ffffff; }
+    
+    .cart-item, .history-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; width: 100%; }
     .cart-del-btn { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; font-weight: bold; padding: 2px 8px; }
+    
+    /* 歷史紀錄文字排版細節：左邊時間項目，右邊金額 */
+    .hist-left { display: flex; flex-direction: column; text-align: left; max-width: 75%; }
+    .hist-time { font-size: 13px; color: #7f8c8d; }
+    .hist-item-name { font-size: 17px; color: #2c3e50; margin-top: 2px; }
+    .hist-right-amt { font-size: 18px; font-weight: bold; text-align: right; width: 25%; }
     
     /* 交易成功彈出視窗 */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
@@ -76,7 +84,6 @@
     .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; font-size: 20px; }
     .modal-title { text-align: center; font-weight: bold; color: #27ae60; font-size: 24px; margin-bottom: 20px; }
     
-    /* 對齊專用佈局 */
     .kv-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
     .kv-row { display: flex; width: 100%; align-items: center; }
     .kv-label { width: 100px; text-align: left; font-weight: bold; flex-shrink: 0; }
@@ -87,7 +94,7 @@
 <body>
 
 <div class="container">
-  <h2>代買系統快速結帳</h2>
+  <h2>小天使代買系統</h2>
   
   <div class="role-selector" id="roleSelector">
     <button class="role-btn active" onclick="switchRole('manager')">代買人登入</button>
@@ -125,6 +132,13 @@
         <div><strong>【餘額】</strong> <span id="info-balance">0</span> 元</div>
       </div>
       
+      <div id="user-history-area" style="display: none;">
+        <label>半年內交易紀錄 (最新50筆)</label>
+        <div class="history-box" id="history-list">
+          （無交易紀錄）
+        </div>
+      </div>
+      
       <div id="manager-action-area">
         <div class="form-group">
           <label>交易金額視窗</label>
@@ -152,7 +166,7 @@
           <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
-          <button class="item-opt" onclick="selectItem(this, '預留4')">預留4</button>
+          <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
         </div>
         
         <div class="cart-box">
@@ -172,7 +186,6 @@
 <div class="modal" id="success-modal">
   <div class="modal-content">
     <div class="modal-title">交易成功</div>
-    
     <div class="kv-container">
       <div class="kv-row"><div class="kv-label">ID</div><div class="kv-colon">:</div><div class="kv-value" id="res-id"></div></div>
       <div class="kv-row"><div class="kv-label">姓名</div><div class="kv-colon">:</div><div class="kv-value" id="res-name"></div></div>
@@ -181,13 +194,12 @@
       <div class="kv-row"><div class="kv-label">變動金額</div><div class="kv-colon">:</div><div class="kv-value" id="res-change"></div></div>
       <div class="kv-row"><div class="kv-label">新餘額</div><div class="kv-colon">:</div><div class="kv-value" id="res-new"></div></div>
     </div>
-    
     <button class="btn" onclick="closeModal()">關閉並繼續</button>
   </div>
 </div>
 
 <script>
-  // 已自動嵌入您的 Google Apps Script 網頁應用程式網址
+  // 網頁應用程式網址保持不變
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWhTmqG_g03-4wJlLRT3qrkJt58dYlnO-WIvY6jOFfueRIedRkHQOC_cNg4VI6YuCwww/exec"; 
 
   let currentRole = 'manager'; 
@@ -196,14 +208,13 @@
   let html5QrcodeScanner = null;
   let selectedItemName = '飲料';
   let shoppingCart = [];
-  let canScan = true; // 關鍵解碼防禦鎖：用最頂層邏輯直接切斷硬件多重回傳，免關相機
+  let canScan = true; // 高敏防禦邏輯鎖
 
   function playBeep(type) {
     try {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
-      
       oscillator.connect(gainNode);
       gainNode.connect(audioCtx.destination);
       gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime); 
@@ -220,9 +231,7 @@
         oscillator.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.15); 
         oscillator.stop(audioCtx.currentTime + 0.35);
       }
-    } catch (e) {
-      console.log("音效撥放失敗:", e);
-    }
+    } catch (e) { console.log(e); }
   }
 
   function switchRole(role) {
@@ -233,7 +242,6 @@
     } else {
       document.querySelector("button[onclick*='user']").classList.add('active');
     }
-    document.getElementById('pass-group').style.display = 'flex';
   }
 
   function handleLogin() {
@@ -286,6 +294,7 @@
       document.getElementById('scanner-section').style.display = 'none'; 
       document.getElementById('panel-divider').style.display = 'none';
       document.getElementById('manager-action-area').style.display = 'none'; 
+      document.getElementById('user-history-area').style.display = 'block'; // 打開歷史紀錄區
       
       scannedUser = loggedInUser;
       showTargetUserInfo();
@@ -294,33 +303,27 @@
       document.getElementById('scanner-section').style.display = 'block';
       document.getElementById('panel-divider').style.display = 'block';
       document.getElementById('manager-action-area').style.display = 'block'; 
+      document.getElementById('user-history-area').style.display = 'none'; // 代買不需要看個人歷史
       document.getElementById('target-user-info').style.display = 'none';
       
       startScanning();
     }
   }
 
-  // 權限優化方案：相機實體只建立一次，後續絕不呼叫 .stop()，完美鎖定權限
   function startScanning() {
-    canScan = true; // 開啟解碼接收鎖
-    
-    // 確保重新開啟時，隱藏的相機區塊再度顯現
+    canScan = true; 
     document.getElementById('scanner-section').style.display = 'block';
     document.getElementById('panel-divider').style.display = 'block';
     
-    if (html5QrcodeScanner) {
-      return; // 如果相機早就在背景開啟了，直接還原變數與 UI 即可，100% 不會跳出權限確認！
-    }
+    if (html5QrcodeScanner) return; 
     
     html5QrcodeScanner = new Html5Qrcode("reader");
     html5QrcodeScanner.start(
       { facingMode: "environment" }, 
       { fps: 10, qrbox: 250 },
       (qrCodeMessage) => {
-        // 核心防禦：如果解碼鎖已關閉，在百萬分之一秒內直接攔截，不跑任何邏輯、不逼聲、不卡死
         if (!canScan) return; 
         canScan = false; 
-        
         playBeep('scan');
         fetchTargetUser(qrCodeMessage.trim().toUpperCase());
       },
@@ -362,7 +365,6 @@
   }
 
   function showTargetUserInfo() {
-    // 頁面長度優化：成功載入成員資訊後，直接將相機區塊 display: none 隱藏，但「完全不關閉相機串流」！
     if (currentRole === 'manager') {
       document.getElementById('scanner-section').style.display = 'none';
       document.getElementById('panel-divider').style.display = 'none';
@@ -373,6 +375,38 @@
     document.getElementById('info-name').innerText = scannedUser.name;
     document.getElementById('info-balance').innerText = scannedUser.balance;
     document.getElementById('tx-amount').value = ""; 
+    
+    // 渲染歷史交易紀錄（一般成員自查專用）
+    if (currentRole === 'user') {
+      renderHistoryUI(scannedUser.history);
+    }
+  }
+
+  // 核心渲染：支援手持端排版與括號內固定四字寬
+  function renderHistoryUI(historyArray) {
+    const histDiv = document.getElementById('history-list');
+    if (!historyArray || historyArray.length === 0) {
+      histDiv.innerHTML = "<div style='text-align:center; padding:15px; color:#7f8c8d;'>（半年內無交易紀錄）</div>";
+      return;
+    }
+    
+    let html = "";
+    historyArray.forEach(log => {
+      // 判斷金額顏色：正數綠色，負數紅色
+      let color = log.change >= 0 ? "#27ae60" : "#e74c3c";
+      let prefix = log.change >= 0 ? "+" : "";
+      
+      html += `<div class="history-item">
+                <div class="hist-left">
+                  <span class="hist-time">${log.date}</span>
+                  <span class="hist-item-name">(${log.item})</span>
+                </div>
+                <div class="hist-right-amt" style="color: ${color};">
+                  ${prefix}${log.change} 元
+                </div>
+              </div>`;
+    });
+    histDiv.innerHTML = html;
   }
 
   function addAmount(val) {
@@ -392,11 +426,7 @@
     let amt = input.value === "" ? 0 : Number(input.value);
     if(amt === 0) { alert("金額不能為0"); return; }
     
-    shoppingCart.push({
-      name: selectedItemName,
-      amount: amt
-    });
-    
+    shoppingCart.push({ name: selectedItemName, amount: amt });
     updateCartUI();
     input.value = ""; 
   }
@@ -471,7 +501,6 @@
     if (currentRole === 'manager') {
       document.getElementById('target-user-info').style.display = 'none'; 
       scannedUser = null;
-      // 點擊關閉並繼續時，一鍵重啟解碼鎖與顯現 UI，零時差直接刷下一個人，完全不彈權限確認視窗！
       startScanning(); 
     } else {
       document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
