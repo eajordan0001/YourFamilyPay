@@ -198,7 +198,7 @@
           <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
-          <button class="item-opt" onclick="selectItem(this, '預留4')">預留4</button>
+          <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
         </div>
         
         <div class="cart-box">
@@ -233,7 +233,6 @@
 </div>
 
 <script>
-  // 請沿用您原本的 GAS 發布網址
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWhTmqG_g03-4wJlLRT3qrkJt58dYlnO-WIvY6jOFfueRIedRkHQOC_cNg4VI6YuCwww/exec"; 
 
   let currentRole = 'manager'; 
@@ -265,16 +264,14 @@
     } catch (e) { console.log(e); }
   }
 
-  // 修正後的顯示隱藏邏輯
+  // 徹底修正：切換身分只改變按鈕亮綠色或粉色，完全不對密碼框做顯示隱藏的操作
   function switchRole(role) {
     currentRole = role;
     document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
     if (role === 'manager') {
       document.querySelector("button[onclick*='manager']").classList.add('active');
-      document.getElementById('pass-group').style.display = 'flex'; // 代買人登入必秀密碼框
     } else {
       document.querySelector("button[onclick*='user']").classList.add('active');
-      document.getElementById('pass-group').style.display = 'none';  // 成員查詢免密碼
     }
   }
 
@@ -283,7 +280,7 @@
     const pass = document.getElementById('login-pass').value.trim();
     
     if(!id) { alert("請輸入ID"); return; }
-    if(currentRole === 'manager' && !pass) { alert("請輸入密碼"); return; }
+    if(!pass) { alert("請輸入密碼"); return; } // 強制不論身分皆需驗證密碼
     
     const loginBtn = document.querySelector("#view-login .btn");
     loginBtn.disabled = true;
@@ -515,7 +512,7 @@
           document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
           cell.classList.add('selected');
           document.getElementById('cal-selected-date-label').innerText = `${fullKeyPath} 的交易明細：`;
-          document.getElementById('cal-day-details').innerHTML = "<div style='text-align:center; padding:15px; color:#7f8c8d;'>當日無任何交易紀錄</div>";
+          document.getElementById('cal-day-details').innerHTML = "<div style='text-align:center; padding:15px; color:#7f8c8d;'>當日無 any 交易紀錄</div>";
         };
       }
       daysBox.appendChild(cell);
