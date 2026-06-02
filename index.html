@@ -133,7 +133,6 @@
     <div id="target-user-info" style="display: none;">
       <div class="info-box">
         <div><strong>【ID】</strong> <span id="info-id">-</span></div>
-        <div><strong>【姓名】</strong> <span id="info-name">-</span></div>
         <div><strong>【餘額】</strong> <span id="info-balance">0</span> 元</div>
       </div>
       
@@ -198,7 +197,7 @@
           <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
-          <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
+          <button class="item-opt" onclick="selectItem(this, '預留4')">預留4</button>
         </div>
         
         <div class="cart-box">
@@ -221,8 +220,7 @@
   <div class="modal-content">
     <div class="modal-title">交易成功</div>
     <div class="kv-container">
-      <div class="kv-row"><div class="kv-label">ID</div><div class="kv-colon">:</div><div class="kv-value" id="res-id"></div></div>
-      <div class="kv-row"><div class="kv-label">姓名</div><div class="kv-colon">:</div><div class="kv-value" id="res-name"></div></div>
+      <div class="kv-row"><div class="kv-label">成員</div><div class="kv-colon">:</div><div class="kv-value" id="res-name"></div></div>
       <div class="kv-row"><div class="kv-label">交易項目</div><div class="kv-colon">:</div><div class="kv-value" id="res-items"></div></div>
       <div class="kv-row"><div class="kv-label">原金額</div><div class="kv-colon">:</div><div class="kv-value" id="res-old"></div></div>
       <div class="kv-row"><div class="kv-label">變動金額</div><div class="kv-colon">:</div><div class="kv-value" id="res-change"></div></div>
@@ -264,7 +262,6 @@
     } catch (e) { console.log(e); }
   }
 
-  // 徹底修正：切換身分只改變按鈕亮綠色或粉色，完全不對密碼框做顯示隱藏的操作
   function switchRole(role) {
     currentRole = role;
     document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
@@ -280,7 +277,7 @@
     const pass = document.getElementById('login-pass').value.trim();
     
     if(!id) { alert("請輸入ID"); return; }
-    if(!pass) { alert("請輸入密碼"); return; } // 強制不論身分皆需驗證密碼
+    if(!pass) { alert("請輸入密碼"); return; }
     
     const loginBtn = document.querySelector("#view-login .btn");
     loginBtn.disabled = true;
@@ -386,10 +383,10 @@
     scannedUser = null;
   }
 
+  // 核心邏輯修正點：將資訊面板的 【ID】位置直接綁定為原【姓名】欄位資料
   function showTargetUserInfo() {
     document.getElementById('target-user-info').style.display = 'block';
-    document.getElementById('info-id').innerText = scannedUser.id;
-    document.getElementById('info-name').innerText = scannedUser.name;
+    document.getElementById('info-id').innerText = scannedUser.name; // 依需求：用原姓名取代原本的ID欄位顯示
     document.getElementById('info-balance').innerText = scannedUser.balance;
     document.getElementById('tx-amount').value = ""; 
     
@@ -512,7 +509,7 @@
           document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
           cell.classList.add('selected');
           document.getElementById('cal-selected-date-label').innerText = `${fullKeyPath} 的交易明細：`;
-          document.getElementById('cal-day-details').innerHTML = "<div style='text-align:center; padding:15px; color:#7f8c8d;'>當日無 any 交易紀錄</div>";
+          document.getElementById('cal-day-details').innerHTML = "<div style='text-align:center; padding:15px; color:#7f8c8d;'>當日無任何交易紀錄</div>";
         };
       }
       daysBox.appendChild(cell);
@@ -619,7 +616,6 @@
   }
 
   function showSuccessModal(data) {
-    document.getElementById('res-id').innerText = data.id;
     document.getElementById('res-name').innerText = data.name;
     document.getElementById('res-items').innerText = data.itemsText;
     document.getElementById('res-old').innerText = data.startBalance + " 元";
