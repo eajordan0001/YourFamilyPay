@@ -10,12 +10,10 @@
   <link class="pwa-icon" rel="apple-touch-icon" sizes="192x192" href="icon192.png">
   <link class="pwa-icon" rel="apple-touch-icon" sizes="512x512" href="icon512.png">
   
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22代買系統%22,%22short_name%22:%22代買%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23e8006e%22,%22icons%22:[{%22src%22:%22icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
-  
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22%E5%B0%8F%E5%A4%A9%E4%BD%BF%E4%BB%A3%E8%B2%B7%E7%B3%BB%E7%B5%B1%22,%22short_name%22:%22%E5%B0%8F%E5%A4%A9%E4%BD%BF%E4%BB%A3%E8%B2%B7%E7%B3%BB%E7%B5%B1%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23e8006e%22,%22icons%22:[{%22src%22:%22icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
 
   <style>
-    /* 全域樣式：亮色系與 20px 字體 */
+    /* 全域樣式：亮色系與符合規範的 20px 大字體 */
     :root {
       --primary-color: #e8006e;
       --bg-color: #f7f9fa;
@@ -31,13 +29,13 @@
     /* 表單單元 */
     .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
     label { font-size: 20px; margin-bottom: 5px; font-weight: bold; }
-    input { font-size: 20px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; outline: none; }
+    input { font-size: 20px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; outline: none; background-color: #fff; }
     input:focus { border-color: var(--primary-color); }
     
     /* 按鈕樣式 */
-    .btn { font-size: 20px; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: opacity 0.2s; }
+    .btn { font-size: 20px; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: opacity 0.2s; text-align: center; }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-secondary { background-color: #7f8c8d; margin-top: 10px; }
+    .btn-secondary { background-color: #7f8c8d; margin-top: 15px; }
     
     /* 切換區塊 */
     .view-section { display: none; }
@@ -48,14 +46,16 @@
     .role-btn { flex: 1; padding: 10px; border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color); font-size: 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .role-btn.active { background: var(--primary-color); color: white; }
     
+    /* 成員按鈕選單網格 (取代原 QR 碼掃描，手機點擊極舒適排版) */
+    .member-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+    .member-select-btn { font-size: 20px; padding: 15px 5px; background: #ffffff; border: 2px solid #e8006e; border-radius: 8px; color: #e8006e; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+    .member-select-btn:active { background: #e8006e; color: white; }
+    
     /* 檢視模式切換按鈕 (列表 vs 月曆) */
     .mode-selector { display: flex; gap: 8px; margin: 10px 0 15px 0; }
     .mode-btn { flex: 1; padding: 8px; font-size: 18px; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; }
     .mode-btn.active { background: #34495e; color: white; border-color: #34495e; font-weight: bold; }
 
-    /* 掃描器外框 */
-    #reader { width: 100%; background: #000; border-radius: 8px; overflow: hidden; min-height: 250px; }
-    
     /* 使用者資訊顯示區 */
     .info-box { background: #fff0f5; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary-color); margin-bottom: 15px; font-size: 20px; }
     .info-box div { margin: 5px 0; }
@@ -83,7 +83,7 @@
     .hist-item-name { font-size: 17px; color: #2c3e50; margin-top: 2px; }
     .hist-right-amt { font-size: 18px; font-weight: bold; text-align: right; width: 25%; }
     
-    /* ================== 月曆 UI 樣式專區 ================== */
+    /* 月曆 UI 樣式專區 */
     .calendar-container { background: #ffffff; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 15px; }
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .calendar-header button { background: none; border: 1px solid #ccc; padding: 5px 12px; font-size: 16px; border-radius: 4px; cursor: pointer; }
@@ -125,7 +125,7 @@
   <div id="view-login" class="view-section active">
     <div class="form-group">
       <label for="login-id">帳號 (ID)</label>
-      <input type="text" id="login-id" placeholder="例如: admin 或 YF001">
+      <input type="text" id="login-id" placeholder="例如: ADMIN 或 YF001">
     </div>
     <div class="form-group" id="pass-group">
       <label for="login-pass">密碼</label>
@@ -135,16 +135,15 @@
   </div>
 
   <div id="view-main" class="view-section">
-    <h3 id="panel-title">代買交易面板</h3>
+    <h3 id="panel-title">代買作業中</h3>
     
-    <div id="scanner-section">
-      <div style="margin-bottom: 15px;">
-        <button class="btn" id="scan-btn" onclick="startScanning()">開始掃描成員 QR</button>
-      </div>
-      <div id="reader"></div>
+    <div id="manager-select-section">
+      <label style="color: var(--primary-color);">請點選結帳成員：</label>
+      <div class="member-grid" id="member-buttons-box">
+        </div>
     </div>
     
-    <hr id="panel-divider" style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+    <hr id="panel-divider" style="border: 0; border-top: 1px solid #eee; margin: 15px 0; display:none;">
     
     <div id="target-user-info" style="display: none;">
       <div class="info-box">
@@ -183,6 +182,11 @@
       </div>
       
       <div id="manager-action-area">
+        <div class="form-group" style="background: #f1f2f6; padding: 10px; border-radius: 6px; border: 1px solid #ddd;">
+          <label for="tx-date-input" style="color:#2f3542; font-size:18px;">📅 交易日期 (預設當天，補帳可改)</label>
+          <input type="date" id="tx-date-input" style="font-size:18px; padding:6px;">
+        </div>
+
         <div class="form-group">
           <label>交易金額視窗</label>
           <input type="number" id="tx-amount" placeholder="0" style="text-align: right;">
@@ -209,7 +213,7 @@
           <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
-          <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
+          <button class="item-opt" onclick="selectItem(this, '預留4')">預留4</button>
         </div>
         
         <div class="cart-box">
@@ -219,6 +223,8 @@
         
         <button class="btn" style="background-color: #27ae60; margin-bottom: 10px;" onclick="addToCart()">加入購物車</button>
         <button class="btn" id="btn-submit-tx" onclick="submitCartTransaction()">確認提交結帳</button>
+        
+        <button class="btn btn-secondary" style="background-color: #e67e22; margin-top:10px;" onclick="backToMemberList()">返回成員名單</button>
       </div>
     </div>
     
@@ -242,22 +248,21 @@
 </div>
 
 <script>
-  // 網頁應用程式網址保持不變
+  // 請繼續沿用您原來的 GAS 發布網址
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWhTmqG_g03-4wJlLRT3qrkJt58dYlnO-WIvY6jOFfueRIedRkHQOC_cNg4VI6YuCwww/exec"; 
 
   let currentRole = 'manager'; 
   let loggedInUser = null;     
   let scannedUser = null;      
-  let html5QrcodeScanner = null;
   let selectedItemName = '飲料';
   let shoppingCart = [];
-  let canScan = true; 
 
-  // 月曆專屬狀態變數
+  // 月曆狀態
   let currentDisplayYear = 2026;
-  let currentDisplayMonth = 5; // 0代表1月，5代表6月（配合JavaScript Date邏輯）
+  let currentDisplayMonth = 5; 
   let currentHistoryMode = 'list';
 
+  // 嗶嗶音效
   function playBeep(type) {
     try {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -267,12 +272,7 @@
       gainNode.connect(audioCtx.destination);
       gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime); 
       
-      if (type === 'scan') {
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.1); 
-      } else if (type === 'success') {
+      if (type === 'success') {
         oscillator.type = 'triangle';
         oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
         oscillator.start();
@@ -287,8 +287,10 @@
     document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
     if (role === 'manager') {
       document.querySelector("button[onclick*='manager']").classList.add('active');
+      document.getElementById('pass-group').style.display = 'flex';
     } else {
       document.querySelector("button[onclick*='user']").classList.add('active');
+      document.getElementById('pass-group').style.display = 'none'; // 成員自查免密碼保持不變
     }
   }
 
@@ -297,7 +299,7 @@
     const pass = document.getElementById('login-pass').value.trim();
     
     if(!id) { alert("請輸入ID"); return; }
-    if(!pass) { alert("請輸入密碼"); return; }
+    if(currentRole === 'manager' && !pass) { alert("請輸入密碼"); return; }
     
     const loginBtn = document.querySelector("#view-login .btn");
     loginBtn.disabled = true;
@@ -318,7 +320,6 @@
       if(data.success) {
         loggedInUser = data;
         
-        // 登入成功時，自動將月曆預設初始化為目前當下的年月
         let today = new Date();
         currentDisplayYear = today.getFullYear();
         currentDisplayMonth = today.getMonth();
@@ -330,7 +331,7 @@
     })
     .catch(err => {
       console.error(err);
-      alert("網路連線失敗或 GAS 網址設定錯誤");
+      alert("網路連線失敗，請確認網路或 GAS 部署");
     })
     .finally(() => {
       loginBtn.disabled = false;
@@ -343,9 +344,13 @@
     document.getElementById('view-main').classList.add('active');
     document.getElementById('roleSelector').style.display = 'none';
     
+    // 初始化日期選擇器為今日 (回溯防呆)
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('tx-date-input').value = todayStr;
+    
     if (currentRole === 'user') {
       document.getElementById('panel-title').innerText = "歡迎！" + loggedInUser.name;
-      document.getElementById('scanner-section').style.display = 'none'; 
+      document.getElementById('manager-select-section').style.display = 'none'; 
       document.getElementById('panel-divider').style.display = 'none';
       document.getElementById('manager-action-area').style.display = 'none'; 
       document.getElementById('user-history-area').style.display = 'block'; 
@@ -353,77 +358,58 @@
       scannedUser = loggedInUser;
       showTargetUserInfo();
     } else {
-      document.getElementById('panel-title').innerText = "代買工作台 (" + loggedInUser.id + ")";
-      document.getElementById('scanner-section').style.display = 'block';
-      document.getElementById('panel-divider').style.display = 'block';
+      document.getElementById('panel-title').innerText = "小天使代買工作台";
+      document.getElementById('manager-select-section').style.display = 'block';
+      document.getElementById('panel-divider').style.display = 'none';
       document.getElementById('manager-action-area').style.display = 'block'; 
       document.getElementById('user-history-area').style.display = 'none'; 
       document.getElementById('target-user-info').style.display = 'none';
       
-      startScanning();
+      // 動態繪製代買人的成員按鈕選單
+      renderMemberButtons(loggedInUser.members);
     }
   }
 
-  function startScanning() {
-    canScan = true; 
-    document.getElementById('scanner-section').style.display = 'block';
-    document.getElementById('panel-divider').style.display = 'block';
+  // 核心功能：讀取後端打包的試算表清單，動態生成快速點擊按鈕
+  function renderMemberButtons(membersArray) {
+    const box = document.getElementById('member-buttons-box');
+    box.innerHTML = "";
     
-    if (html5QrcodeScanner) return; 
+    if(!membersArray || membersArray.length === 0) {
+      box.innerHTML = "<div style='grid-column:span 3; text-align:center; color:#7f8c8d;'>成員名單內無任何資料</div>";
+      return;
+    }
     
-    html5QrcodeScanner = new Html5Qrcode("reader");
-    html5QrcodeScanner.start(
-      { facingMode: "environment" }, 
-      { fps: 10, qrbox: 250 },
-      (qrCodeMessage) => {
-        if (!canScan) return; 
-        canScan = false; 
-        playBeep('scan');
-        fetchTargetUser(qrCodeMessage.trim().toUpperCase());
-      },
-      (errorMessage) => { }
-    ).catch(err => {
-      console.error(err);
-      canScan = true;
+    membersArray.forEach(m => {
+      let btn = document.createElement('button');
+      btn.className = "member-select-btn";
+      btn.innerText = m.name;
+      btn.onclick = function() {
+        // 點擊後，直接將該成員選中並拉出結帳抽屜
+        selectTargetMember(m);
+      };
+      box.appendChild(btn);
     });
   }
 
-  function fetchTargetUser(targetId) {
-    fetch(GAS_WEB_APP_URL, {
-      method: "POST",
-      body: JSON.stringify({ 
-        action: "loginAndFetch", 
-        id: targetId, 
-        password: "", 
-        isManager: false,
-        byManagerScan: true 
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        scannedUser = data;
-        shoppingCart = []; 
-        updateCartUI();
-        showTargetUserInfo();
-      } else {
-        alert("讀取成員失敗: " + data.message);
-        startScanning(); 
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      alert("讀取成員時網路連線發生錯誤");
-      startScanning();
-    });
+  function selectTargetMember(memberObj) {
+    scannedUser = memberObj;
+    shoppingCart = []; 
+    updateCartUI();
+    
+    document.getElementById('manager-select-section').style.display = 'none';
+    document.getElementById('panel-divider').style.display = 'block';
+    showTargetUserInfo();
+  }
+
+  function backToMemberList() {
+    document.getElementById('target-user-info').style.display = 'none';
+    document.getElementById('panel-divider').style.display = 'none';
+    document.getElementById('manager-select-section').style.display = 'block';
+    scannedUser = null;
   }
 
   function showTargetUserInfo() {
-    if (currentRole === 'manager') {
-      document.getElementById('scanner-section').style.display = 'none';
-      document.getElementById('panel-divider').style.display = 'none';
-    }
-    
     document.getElementById('target-user-info').style.display = 'block';
     document.getElementById('info-id').innerText = scannedUser.id;
     document.getElementById('info-name').innerText = scannedUser.name;
@@ -432,11 +418,10 @@
     
     if (currentRole === 'user') {
       renderHistoryUI(scannedUser.history);
-      renderCalendarUI(); // 渲染月曆
+      renderCalendarUI(); 
     }
   }
 
-  // 模式切換：列表模式 與 月曆模式
   function changeHistoryMode(mode) {
     currentHistoryMode = mode;
     document.getElementById('btn-mode-list').classList.remove('active');
@@ -450,11 +435,10 @@
     } else {
       document.getElementById('btn-mode-cal').classList.add('active');
       document.getElementById('history-cal-wrapper').style.display = 'block';
-      renderCalendarUI(); // 切換時重新繪製月曆
+      renderCalendarUI();
     }
   }
 
-  // 渲染模式一：傳統流水帳清單
   function renderHistoryUI(historyArray) {
     const histDiv = document.getElementById('history-list');
     if (!historyArray || historyArray.length === 0) {
@@ -480,7 +464,6 @@
     histDiv.innerHTML = html;
   }
 
-  // ================== 月曆核心代碼 ==================
   function navigateMonth(direction) {
     currentDisplayMonth += direction;
     if (currentDisplayMonth > 11) {
@@ -494,23 +477,18 @@
   }
 
   function renderCalendarUI() {
-    // 1. 設定月曆頂端標題文字
     const displayMonthStr = String(currentDisplayMonth + 1).padStart(2, '0');
     document.getElementById('cal-month-title').innerText = `${currentDisplayYear} 年 ${displayMonthStr} 月`;
     
     const daysBox = document.getElementById('calendar-days-box');
-    daysBox.innerHTML = ""; // 清空舊格子
+    daysBox.innerHTML = ""; 
     
-    // 清空下方的單日詳細視窗
     document.getElementById('cal-selected-date-label').innerText = "請點擊上方含數字的日期查看明細：";
     document.getElementById('cal-day-details').innerHTML = "（無選取日期）";
 
-    // 2. 預先依據當前選取的「年/月/日」將帳單資料包裝成方便查閱的字典物聯
-    // 格式：{"2026/06/01": [logObj1, logObj2...]}
     let txDictionary = {};
     if (scannedUser && scannedUser.history) {
       scannedUser.history.forEach(log => {
-        // log.date 的格式為 "2026/06/01 15:30" -> 切割出日期部分
         let datePart = log.date.split(" ")[0]; 
         if (!txDictionary[datePart]) {
           txDictionary[datePart] = [];
@@ -519,18 +497,15 @@
       });
     }
 
-    // 3. 計算月曆日期網格基礎數值
-    let firstDayOfWeek = new Date(currentDisplayYear, currentDisplayMonth, 1).getDay(); // 第一天是星期幾
-    let totalDaysInMonth = new Date(currentDisplayYear, currentDisplayMonth + 1, 0).getDate(); // 這個月總共有幾天
+    let firstDayOfWeek = new Date(currentDisplayYear, currentDisplayMonth, 1).getDay(); 
+    let totalDaysInMonth = new Date(currentDisplayYear, currentDisplayMonth + 1, 0).getDate(); 
 
-    // 4. 產生上個月的空白墊底格子
     for (let i = 0; i < firstDayOfWeek; i++) {
       let emptyCell = document.createElement('div');
       emptyCell.className = "cal-cell empty";
       daysBox.appendChild(emptyCell);
     }
 
-    // 5. 開始依序印出 1 號到當月最後一天的日期格子
     for (let day = 1; day <= totalDaysInMonth; day++) {
       let currentDayStr = String(day).padStart(2, '0');
       let fullKeyPath = `${currentDisplayYear}/${displayMonthStr}/${currentDayStr}`;
@@ -538,32 +513,24 @@
       let cell = document.createElement('div');
       cell.className = "cal-cell";
       
-      // 置入日期文字
       let dateNumSpan = document.createElement('span');
       dateNumSpan.className = "cal-date-num";
       dateNumSpan.innerText = day;
       cell.appendChild(dateNumSpan);
       
-      // 檢查此日期當天是否有任何交易明細
       if (txDictionary[fullKeyPath] && txDictionary[fullKeyPath].length > 0) {
         let count = txDictionary[fullKeyPath].length;
-        
-        // 建立當日交易筆數小貼紙 (Badge)
         let badge = document.createElement('span');
         badge.className = "cal-badge";
         badge.innerText = count;
         cell.appendChild(badge);
         
-        // 綁定點擊事件：手點格子時，下方顯示明細流水帳
         cell.onclick = function() {
-          // 移除所有格子的選取外框特效，並在目前點擊的格子加上特效
           document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
           cell.classList.add('selected');
-          
           showDayDetailsUI(fullKeyPath, txDictionary[fullKeyPath]);
         };
       } else {
-        // 沒有交易的格子，點擊時僅提示無交易
         cell.onclick = function() {
           document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
           cell.classList.add('selected');
@@ -571,22 +538,19 @@
           document.getElementById('cal-day-details').innerHTML = "<div style='text-align:center; padding:15px; color:#7f8c8d;'>當日無任何交易紀錄</div>";
         };
       }
-      
       daysBox.appendChild(cell);
     }
   }
 
-  // 點擊月曆格子後，在下方展示當天獨立明細清單的區塊
   function showDayDetailsUI(dateLabel, dayLogs) {
     document.getElementById('cal-selected-date-label').innerText = `${dateLabel} 的交易明細 (${dayLogs.length}筆)：`;
-    
     const detailsDiv = document.getElementById('cal-day-details');
     let html = "";
     
     dayLogs.forEach(log => {
       let color = log.change >= 0 ? "#27ae60" : "#e74c3c";
       let prefix = log.change >= 0 ? "+" : "";
-      let timePart = log.date.split(" ")[1]; // 只抓取時分 "15:30"
+      let timePart = log.date.split(" ")[1]; 
       
       html += `<div class="history-item">
                 <div class="hist-left">
@@ -600,7 +564,6 @@
     });
     detailsDiv.innerHTML = html;
   }
-  // ================== 月曆核心代碼結束 ==================
 
   function addAmount(val) {
     let input = document.getElementById('tx-amount');
@@ -648,6 +611,9 @@
   function submitCartTransaction() {
     if(shoppingCart.length === 0) { alert("購物車目前沒有項目，請先加入項目。"); return; }
     
+    // 獲取回溯的自訂日期並傳遞給 GAS
+    const customDateValue = document.getElementById('tx-date-input').value;
+    
     document.getElementById('btn-submit-tx').disabled = true;
     document.getElementById('btn-submit-tx').innerText = "交易處理中...";
 
@@ -657,7 +623,8 @@
         action: "submitTransaction",
         managerId: loggedInUser.id,
         userId: scannedUser.id,
-        cartItems: shoppingCart
+        cartItems: shoppingCart,
+        customDate: customDateValue // 傳送回溯日期欄位
       })
     })
     .then(res => res.json())
@@ -692,9 +659,8 @@
     updateCartUI();
     
     if (currentRole === 'manager') {
-      document.getElementById('target-user-info').style.display = 'none'; 
-      scannedUser = null;
-      startScanning(); 
+      // 結帳完成，回到大成員名單選單，等待下一筆交易
+      backToMemberList();
     } else {
       document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
       document.getElementById('tx-amount').value = ""; 
@@ -705,12 +671,7 @@
     loggedInUser = null;
     scannedUser = null;
     shoppingCart = [];
-    canScan = true;
     currentHistoryMode = 'list';
-    if(html5QrcodeScanner) { 
-      try { html5QrcodeScanner.stop(); } catch(e){} 
-      html5QrcodeScanner = null;
-    }
     document.getElementById('view-main').classList.remove('active');
     document.getElementById('view-login').classList.add('active');
     document.getElementById('roleSelector').style.display = 'flex';
