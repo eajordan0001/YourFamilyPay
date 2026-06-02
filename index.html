@@ -13,7 +13,6 @@
   <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22%E5%B0%8F%E5%A4%A9%E4%BD%BF%E4%BB%A3%E8%B2%B7%E7%B3%BB%E7%B5%B1%22,%22short_name%22:%22%E5%B0%8F%E5%A4%A9%E4%BD%BF%E4%BB%A3%E8%B2%B7%E7%B3%BB%E7%B5%B1%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23e8006e%22,%22icons%22:[{%22src%22:%22icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
 
   <style>
-    /* 全域樣式：亮色系與符合規範的 20px 大字體 */
     :root {
       --primary-color: #e8006e;
       --bg-color: #f7f9fa;
@@ -26,64 +25,52 @@
     .container { max-width: 500px; margin: 0 auto; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
     h2, h3 { color: var(--primary-color); text-align: center; margin-top: 0; font-size: 24px; }
     
-    /* 表單單元 */
     .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
     label { font-size: 20px; margin-bottom: 5px; font-weight: bold; }
     input { font-size: 20px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; outline: none; background-color: #fff; }
     input:focus { border-color: var(--primary-color); }
     
-    /* 按鈕樣式 */
     .btn { font-size: 20px; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: opacity 0.2s; text-align: center; }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-secondary { background-color: #7f8c8d; margin-top: 15px; }
     
-    /* 切換區塊 */
     .view-section { display: none; }
     .view-section.active { display: block; }
     
-    /* 身分選擇器 */
     .role-selector { display: flex; gap: 10px; margin-bottom: 20px; }
     .role-btn { flex: 1; padding: 10px; border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color); font-size: 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .role-btn.active { background: var(--primary-color); color: white; }
     
-    /* 成員按鈕選單網格 (取代原 QR 碼掃描，手機點擊極舒適排版) */
     .member-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
     .member-select-btn { font-size: 20px; padding: 15px 5px; background: #ffffff; border: 2px solid #e8006e; border-radius: 8px; color: #e8006e; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
     .member-select-btn:active { background: #e8006e; color: white; }
     
-    /* 檢視模式切換按鈕 (列表 vs 月曆) */
     .mode-selector { display: flex; gap: 8px; margin: 10px 0 15px 0; }
     .mode-btn { flex: 1; padding: 8px; font-size: 18px; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; }
     .mode-btn.active { background: #34495e; color: white; border-color: #34495e; font-weight: bold; }
 
-    /* 使用者資訊顯示區 */
     .info-box { background: #fff0f5; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary-color); margin-bottom: 15px; font-size: 20px; }
     .info-box div { margin: 5px 0; }
     
-    /* 金額按鈕網格 */
     .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
     .grid-5 button { font-size: 18px; padding: 10px 0; background: #fff; border: 2px solid #f0a3c4; border-radius: 6px; cursor: pointer; color: var(--primary-color); font-weight: bold; }
     .grid-5 button:active { background: #f0a3c4; color: white; }
     
-    /* 交易項目網格 */
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
     .grid-3 button { font-size: 20px; padding: 12px 0; background: #f8f9fa; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .grid-3 button.selected { background: var(--primary-color); color: white; border-color: var(--primary-color); }
     
-    /* 購物車與歷史紀錄外框 */
     .cart-box, .history-box { background: #f9f9f9; border: 1px dashed #ccc; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 18px; }
     .history-box { max-height: 250px; overflow-y: auto; overflow-x: hidden; border: 1px solid #ddd; background: #ffffff; }
     
     .cart-item, .history-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; width: 100%; }
     .cart-del-btn { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; font-weight: bold; padding: 2px 8px; }
     
-    /* 歷史紀錄文字排版細節 */
     .hist-left { display: flex; flex-direction: column; text-align: left; max-width: 75%; }
     .hist-time { font-size: 13px; color: #7f8c8d; }
     .hist-item-name { font-size: 17px; color: #2c3e50; margin-top: 2px; }
     .hist-right-amt { font-size: 18px; font-weight: bold; text-align: right; width: 25%; }
     
-    /* 月曆 UI 樣式專區 */
     .calendar-container { background: #ffffff; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 15px; }
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .calendar-header button { background: none; border: 1px solid #ccc; padding: 5px 12px; font-size: 16px; border-radius: 4px; cursor: pointer; }
@@ -99,7 +86,6 @@
     .cal-date-num { font-size: 14px; color: #2c3e50; }
     .cal-badge { display: inline-block; background-color: var(--primary-color); color: white; font-size: 11px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; text-align: center; line-height: 18px; margin-top: 3px; }
     
-    /* 交易成功彈出視窗 */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
     .modal.active { display: flex; }
     .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; font-size: 20px; }
@@ -135,12 +121,11 @@
   </div>
 
   <div id="view-main" class="view-section">
-    <h3 id="panel-title">代買作業中</h3>
+    <h3 id="panel-title">代買工作台</h3>
     
     <div id="manager-select-section">
       <label style="color: var(--primary-color);">請點選結帳成員：</label>
-      <div class="member-grid" id="member-buttons-box">
-        </div>
+      <div class="member-grid" id="member-buttons-box"></div>
     </div>
     
     <hr id="panel-divider" style="border: 0; border-top: 1px solid #eee; margin: 15px 0; display:none;">
@@ -248,7 +233,7 @@
 </div>
 
 <script>
-  // 請繼續沿用您原來的 GAS 發布網址
+  // 請沿用您原本的 GAS 發布網址
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWhTmqG_g03-4wJlLRT3qrkJt58dYlnO-WIvY6jOFfueRIedRkHQOC_cNg4VI6YuCwww/exec"; 
 
   let currentRole = 'manager'; 
@@ -257,12 +242,10 @@
   let selectedItemName = '飲料';
   let shoppingCart = [];
 
-  // 月曆狀態
   let currentDisplayYear = 2026;
   let currentDisplayMonth = 5; 
   let currentHistoryMode = 'list';
 
-  // 嗶嗶音效
   function playBeep(type) {
     try {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -282,15 +265,16 @@
     } catch (e) { console.log(e); }
   }
 
+  // 修正後的顯示隱藏邏輯
   function switchRole(role) {
     currentRole = role;
     document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
     if (role === 'manager') {
       document.querySelector("button[onclick*='manager']").classList.add('active');
-      document.getElementById('pass-group').style.display = 'flex';
+      document.getElementById('pass-group').style.display = 'flex'; // 代買人登入必秀密碼框
     } else {
       document.querySelector("button[onclick*='user']").classList.add('active');
-      document.getElementById('pass-group').style.display = 'none'; // 成員自查免密碼保持不變
+      document.getElementById('pass-group').style.display = 'none';  // 成員查詢免密碼
     }
   }
 
@@ -344,7 +328,6 @@
     document.getElementById('view-main').classList.add('active');
     document.getElementById('roleSelector').style.display = 'none';
     
-    // 初始化日期選擇器為今日 (回溯防呆)
     const todayStr = new Date().toISOString().split('T')[0];
     document.getElementById('tx-date-input').value = todayStr;
     
@@ -365,12 +348,10 @@
       document.getElementById('user-history-area').style.display = 'none'; 
       document.getElementById('target-user-info').style.display = 'none';
       
-      // 動態繪製代買人的成員按鈕選單
       renderMemberButtons(loggedInUser.members);
     }
   }
 
-  // 核心功能：讀取後端打包的試算表清單，動態生成快速點擊按鈕
   function renderMemberButtons(membersArray) {
     const box = document.getElementById('member-buttons-box');
     box.innerHTML = "";
@@ -385,7 +366,6 @@
       btn.className = "member-select-btn";
       btn.innerText = m.name;
       btn.onclick = function() {
-        // 點擊後，直接將該成員選中並拉出結帳抽屜
         selectTargetMember(m);
       };
       box.appendChild(btn);
@@ -611,7 +591,6 @@
   function submitCartTransaction() {
     if(shoppingCart.length === 0) { alert("購物車目前沒有項目，請先加入項目。"); return; }
     
-    // 獲取回溯的自訂日期並傳遞給 GAS
     const customDateValue = document.getElementById('tx-date-input').value;
     
     document.getElementById('btn-submit-tx').disabled = true;
@@ -624,7 +603,7 @@
         managerId: loggedInUser.id,
         userId: scannedUser.id,
         cartItems: shoppingCart,
-        customDate: customDateValue // 傳送回溯日期欄位
+        customDate: customDateValue
       })
     })
     .then(res => res.json())
@@ -659,7 +638,6 @@
     updateCartUI();
     
     if (currentRole === 'manager') {
-      // 結帳完成，回到大成員名單選單，等待下一筆交易
       backToMemberList();
     } else {
       document.getElementById('info-balance').innerText = Number(document.getElementById('res-new').innerText.replace(" 元",""));
