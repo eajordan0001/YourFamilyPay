@@ -110,8 +110,8 @@
 
   <div id="view-login" class="view-section active">
     <div class="form-group">
-      <label for="login-id">帳號 (ID)</label>
-      <input type="text" id="login-id" placeholder="例如: ADMIN 或 YF001">
+      <label for="login-id">帳號 (中文姓名 / ID)</label>
+      <input type="text" id="login-id" placeholder="例如：ADMIN 或 曉萍">
     </div>
     <div class="form-group" id="pass-group">
       <label for="login-pass">密碼</label>
@@ -133,7 +133,7 @@
     <div id="target-user-info" style="display: none;">
       <div class="info-box">
         <div><strong>【ID】</strong> <span id="info-id">-</span></div>
-        <div><strong>【餘額】</strong> <span id="info-balance">0</span> 元</div>
+        <div><strong>【餘額】</strong> <span id="info-balance">0</span> 元 <span id="info-warn-icon" style="color:red; font-weight:bold;"></span></div>
       </div>
       
       <div id="user-history-area" style="display: none;">
@@ -194,7 +194,7 @@
         <div class="grid-3" id="item-grid">
           <button class="item-opt selected" onclick="selectItem(this, '飲料')">飲料</button>
           <button class="item-opt" onclick="selectItem(this, '午餐')">午餐</button>
-          <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
+          <button class="item-opt" onclick="selectItem(this, '文具')">文具</button>
           <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
           <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
@@ -273,10 +273,10 @@
   }
 
   function handleLogin() {
-    const id = document.getElementById('login-id').value.trim().toUpperCase();
+    const id = document.getElementById('login-id').value.trim();
     const pass = document.getElementById('login-pass').value.trim();
     
-    if(!id) { alert("請輸入ID"); return; }
+    if(!id) { alert("請輸入帳號"); return; }
     if(!pass) { alert("請輸入密碼"); return; }
     
     const loginBtn = document.querySelector("#view-login .btn");
@@ -297,11 +297,9 @@
     .then(data => {
       if(data.success) {
         loggedInUser = data;
-        
         let today = new Date();
         currentDisplayYear = today.getFullYear();
         currentDisplayMonth = today.getMonth();
-        
         showMainPanel();
       } else {
         alert("錯誤: " + data.message);
@@ -383,11 +381,19 @@
     scannedUser = null;
   }
 
-  // 核心邏輯修正點：將資訊面板的 【ID】位置直接綁定為原【姓名】欄位資料
   function showTargetUserInfo() {
     document.getElementById('target-user-info').style.display = 'block';
-    document.getElementById('info-id').innerText = scannedUser.name; // 依需求：用原姓名取代原本的ID欄位顯示
+    document.getElementById('info-id').innerText = scannedUser.name; 
     document.getElementById('info-balance').innerText = scannedUser.balance;
+    
+    // 【核心邏輯更新】高低於門檻 100 元時顯示 ⚠️ 警告標籤
+    const warnIconSpan = document.getElementById('info-warn-icon');
+    if (Number(scannedUser.balance) < 100) {
+      warnIconSpan.innerText = "⚠️";
+    } else {
+      warnIconSpan.innerText = "";
+    }
+    
     document.getElementById('tx-amount').value = ""; 
     
     if (currentRole === 'user') {
