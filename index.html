@@ -388,7 +388,7 @@
     
     // 【核心邏輯更新】高低於門檻 100 元時顯示 ⚠️ 警告標籤
     const warnIconSpan = document.getElementById('info-warn-icon');
-    if (Number(scannedUser.balance) < 100) {
+    if (Number(scannedUser.balance) <= 100) {
       warnIconSpan.innerText = "⚠️";
     } else {
       warnIconSpan.innerText = "";
