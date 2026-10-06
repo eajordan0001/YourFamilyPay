@@ -114,7 +114,7 @@
       <!-- 代買人模式：維持文字輸入框 -->
       <input type="text" id="login-id-input" placeholder="例如：ADMIN">
       
-      <!-- 一般成員模式：下拉選單 (預設隱藏，切換角色時自動切換顯示) -->
+      <!-- 一般成員模式：下拉選單 -->
       <select id="login-id-select" style="display: none;">
         <option value="">-- 請選擇您的姓名 --</option>
       </select>
@@ -202,8 +202,8 @@
         <div class="grid-3" id="item-grid">
           <button class="item-opt selected" onclick="selectItem(this, '飲料')">飲料</button>
           <button class="item-opt" onclick="selectItem(this, '午餐')">午餐</button>
-          <button class="item-opt" onclick="selectItem(this, '預留1')">文具</button>
-          <button class="item-opt" onclick="selectItem(this, '預留2')">下午茶</button>
+          <button class="item-opt" onclick="selectItem(this, '預留1')">預留1</button>
+          <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
           <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
         </div>
@@ -250,35 +250,27 @@
   let currentDisplayYear = 2026;
   let currentDisplayMonth = 5; 
   let currentHistoryMode = 'list';
-  let globalMemberList = []; // 快取成員清單供下拉選單使用
+  let globalMemberList = []; 
 
-  // 頁面載入時，先向後端拿一次成員清單來填入一般成員的下拉選單
-  window.addEventListener('DOMContentLoaded', () => {
-    fetchMemberListForDropdown();
-  });
-
-  function fetchMemberListForDropdown() {
-    // 透過一次輕量請求取得成員清單 (或藉由預設動作取得)
+  function loadMembersForUserDropdown() {
     fetch(GAS_WEB_APP_URL, {
       method: "POST",
-      body: JSON.stringify({ action: "loginAndFetch", id: "admin_preload_dummy", password: "dummy", isManager: true })
+      body: JSON.stringify({ action: "getMemberList" })
     })
     .then(res => res.json())
     .then(data => {
-      if(data.members) {
+      if(data.success && data.members) {
         globalMemberList = data.members;
         populateMemberDropdown(globalMemberList);
       }
     })
     .catch(err => {
-      // 若預先載入失敗也沒關係，後面登入時還會再抓一次
-      console.log("Preload members optional fail:", err);
+      console.log("載入成員清單失敗:", err);
     });
   }
 
   function populateMemberDropdown(membersArray) {
     const selectBox = document.getElementById('login-id-select');
-    // 保留第一個提示選項
     selectBox.innerHTML = '<option value="">-- 請選擇您的姓名 --</option>';
     membersArray.forEach(m => {
       let opt = document.createElement('option');
@@ -327,6 +319,8 @@
       inputField.style.display = 'none';
       selectField.style.display = 'block';
       selectField.value = "";
+      
+      loadMembersForUserDropdown(); // 點擊一般成員時自動抓取最新名單填入下拉選單
     }
   }
 
@@ -363,7 +357,6 @@
         loggedInUser = data;
         if(data.members) {
           globalMemberList = data.members;
-          populateMemberDropdown(globalMemberList);
         }
         let today = new Date();
         currentDisplayYear = today.getFullYear();
@@ -456,7 +449,7 @@
     
     const warnIconSpan = document.getElementById('info-warn-icon');
     if (Number(scannedUser.balance) < 100) {
-      warnIconSpan.innerText = "⚠️";
+      warnIconSpan.innerText = "⚠️️";
     } else {
       warnIconSpan.innerText = "";
     }
