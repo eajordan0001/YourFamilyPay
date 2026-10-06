@@ -6,11 +6,9 @@
   <title>小天使代買系統</title>
   
   <meta name="theme-color" content="#e8006e">
-  
   <link class="pwa-icon" rel="apple-touch-icon" sizes="192x192" href="icon192.png">
   <link class="pwa-icon" rel="apple-touch-icon" sizes="512x512" href="icon512.png">
-  
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22%E5%B0%8F%E5%A4%A9%E4%BD%BF%E4%BB%A3%E8%B2%B7%E7%B3%BB%E7%B5%B1%22,%22short_name%22:%22%E5%B0%8F%E5%A4%A9%E4%BD%BF%E4%BB%A3%E8%B2%B7%E7%B3%BB%E7%B5%B1%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23e8006e%22,%22icons%22:[{%22src%22:%22icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22%E5%B0%8F%E5%A4%A9%E4%BD%BF%E4%BB%A3%E8%B2%B7%E7%B3%BB%E7%B5%B1%22,%22short_name%22:%22%E5%B0%8F%E5%A4%A9%E4%BD%BF%E4%BB%A3%E8%B2%B7%E7%B3%BB%E7%B5%B1%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%e8%006e%22,%22icons%22:[{%22src%22:%22icon192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22icon512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
 
   <style>
     :root {
@@ -27,8 +25,8 @@
     
     .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
     label { font-size: 20px; margin-bottom: 5px; font-weight: bold; }
-    input { font-size: 20px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; outline: none; background-color: #fff; }
-    input:focus { border-color: var(--primary-color); }
+    input, select { font-size: 20px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; outline: none; background-color: #fff; width: 100%; }
+    input:focus, select:focus { border-color: var(--primary-color); }
     
     .btn { font-size: 20px; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: opacity 0.2s; text-align: center; }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -108,18 +106,28 @@
     <button class="role-btn" onclick="switchRole('user')">一般成員查詢</button>
   </div>
 
+  <!-- 1. 登入區塊 -->
   <div id="view-login" class="view-section active">
     <div class="form-group">
-      <label for="login-id">帳號 (中文姓名 / ID)</label>
-      <input type="text" id="login-id" placeholder="例如：ADMIN 或 曉萍">
+      <label id="login-label-text" for="login-id-input">帳號 (管理員代號)</label>
+      
+      <!-- 代買人模式：維持文字輸入框 -->
+      <input type="text" id="login-id-input" placeholder="例如：ADMIN">
+      
+      <!-- 一般成員模式：下拉選單 (預設隱藏，切換角色時自動切換顯示) -->
+      <select id="login-id-select" style="display: none;">
+        <option value="">-- 請選擇您的姓名 --</option>
+      </select>
     </div>
-    <div class="form-group" id="pass-group">
+
+    <div class="form-group">
       <label for="login-pass">密碼</label>
       <input type="password" id="login-pass">
     </div>
     <button class="btn" onclick="handleLogin()">進入系統</button>
   </div>
 
+  <!-- 2. 主操作與顯示區塊 -->
   <div id="view-main" class="view-section">
     <h3 id="panel-title">代買工作台</h3>
     
@@ -194,8 +202,8 @@
         <div class="grid-3" id="item-grid">
           <button class="item-opt selected" onclick="selectItem(this, '飲料')">飲料</button>
           <button class="item-opt" onclick="selectItem(this, '午餐')">午餐</button>
-          <button class="item-opt" onclick="selectItem(this, '文具')">文具</button>
-          <button class="item-opt" onclick="selectItem(this, '預留2')">預留2</button>
+          <button class="item-opt" onclick="selectItem(this, '預留1')">文具</button>
+          <button class="item-opt" onclick="selectItem(this, '預留2')">下午茶</button>
           <button class="item-opt" onclick="selectItem(this, '預留3')">預留3</button>
           <button class="item-opt" onclick="selectItem(this, '儲值金')">儲值金</button>
         </div>
@@ -212,7 +220,7 @@
       </div>
     </div>
     
-    <button class="btn btn-secondary" onclick="logout()">登出 / 切換帳號</button>
+    <button class="btn btn-secondary" onclick="logout()">登入 / 切換帳號</button>
   </div>
 </div>
 
@@ -242,6 +250,43 @@
   let currentDisplayYear = 2026;
   let currentDisplayMonth = 5; 
   let currentHistoryMode = 'list';
+  let globalMemberList = []; // 快取成員清單供下拉選單使用
+
+  // 頁面載入時，先向後端拿一次成員清單來填入一般成員的下拉選單
+  window.addEventListener('DOMContentLoaded', () => {
+    fetchMemberListForDropdown();
+  });
+
+  function fetchMemberListForDropdown() {
+    // 透過一次輕量請求取得成員清單 (或藉由預設動作取得)
+    fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "loginAndFetch", id: "admin_preload_dummy", password: "dummy", isManager: true })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.members) {
+        globalMemberList = data.members;
+        populateMemberDropdown(globalMemberList);
+      }
+    })
+    .catch(err => {
+      // 若預先載入失敗也沒關係，後面登入時還會再抓一次
+      console.log("Preload members optional fail:", err);
+    });
+  }
+
+  function populateMemberDropdown(membersArray) {
+    const selectBox = document.getElementById('login-id-select');
+    // 保留第一個提示選項
+    selectBox.innerHTML = '<option value="">-- 請選擇您的姓名 --</option>';
+    membersArray.forEach(m => {
+      let opt = document.createElement('option');
+      opt.value = m.name;
+      opt.innerText = m.name;
+      selectBox.appendChild(opt);
+    });
+  }
 
   function playBeep(type) {
     try {
@@ -265,18 +310,37 @@
   function switchRole(role) {
     currentRole = role;
     document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    
+    const inputField = document.getElementById('login-id-input');
+    const selectField = document.getElementById('login-id-select');
+    const labelText = document.getElementById('login-label-text');
+
     if (role === 'manager') {
       document.querySelector("button[onclick*='manager']").classList.add('active');
+      labelText.innerText = "帳號 (管理員代號)";
+      inputField.style.display = 'block';
+      selectField.style.display = 'none';
+      inputField.value = "";
     } else {
       document.querySelector("button[onclick*='user']").classList.add('active');
+      labelText.innerText = "選擇帳號 (一般成員)";
+      inputField.style.display = 'none';
+      selectField.style.display = 'block';
+      selectField.value = "";
     }
   }
 
   function handleLogin() {
-    const id = document.getElementById('login-id').value.trim();
+    let id = "";
+    if (currentRole === 'manager') {
+      id = document.getElementById('login-id-input').value.trim();
+    } else {
+      id = document.getElementById('login-id-select').value.trim();
+    }
+    
     const pass = document.getElementById('login-pass').value.trim();
     
-    if(!id) { alert("請輸入帳號"); return; }
+    if(!id) { alert(currentRole === 'manager' ? "請輸入帳號" : "請選擇您的姓名"); return; }
     if(!pass) { alert("請輸入密碼"); return; }
     
     const loginBtn = document.querySelector("#view-login .btn");
@@ -297,6 +361,10 @@
     .then(data => {
       if(data.success) {
         loggedInUser = data;
+        if(data.members) {
+          globalMemberList = data.members;
+          populateMemberDropdown(globalMemberList);
+        }
         let today = new Date();
         currentDisplayYear = today.getFullYear();
         currentDisplayMonth = today.getMonth();
@@ -386,9 +454,8 @@
     document.getElementById('info-id').innerText = scannedUser.name; 
     document.getElementById('info-balance').innerText = scannedUser.balance;
     
-    // 【核心邏輯更新】高低於門檻 100 元時顯示 ⚠️ 警告標籤
     const warnIconSpan = document.getElementById('info-warn-icon');
-    if (Number(scannedUser.balance) <= 100) {
+    if (Number(scannedUser.balance) < 100) {
       warnIconSpan.innerText = "⚠️";
     } else {
       warnIconSpan.innerText = "";
@@ -652,7 +719,8 @@
     document.getElementById('view-main').classList.remove('active');
     document.getElementById('view-login').classList.add('active');
     document.getElementById('roleSelector').style.display = 'flex';
-    document.getElementById('login-id').value = "";
+    document.getElementById('login-id-input').value = "";
+    document.getElementById('login-id-select').value = "";
     document.getElementById('login-pass').value = "";
     document.getElementById('btn-mode-list').classList.add('active');
     document.getElementById('btn-mode-cal').classList.remove('active');
